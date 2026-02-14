@@ -104,10 +104,20 @@ def calculate_breadth():
     final = {}
 
     for key, stocks in result.items():
+        
+        # Smart sorting logic
+        if key in ["declines", "down_4_percent", "down_20_percent_monthly"]:
+            # Most negative first
+            sorted_stocks = sorted(stocks, key=lambda x: x["pct"])
+        else:
+            # Highest positive first
+            sorted_stocks = sorted(stocks, key=lambda x: x["pct"], reverse=True)
+
         final[key] = {
             "count": len(stocks),
-            "stocks": sorted(stocks, key=lambda x: x["symbol"])
+            "stocks": sorted_stocks
         }
+
 
     final["indices"] = {
         "nifty": nifty_data,
