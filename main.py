@@ -1,35 +1,23 @@
-print("NEW VERSION LOADED 🚀 AUTO UNIVERSE")
-
-from fastapi import FastAPI
-
-print("APP STARTED SUCCESSFULLY 🚀")
-
-app = FastAPI()
-
-@app.get("/")
-def home():
-    return {"message": "If you see this, deployment works"}
-
-from universe import load_stock_universe
-@app.get("/stocks")
-def get_stocks():
-    stocks = load_stock_universe()
-    return {
-        "count": len(stocks),
-        "stocks": stocks
-    }
+from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
 
 from breadth_engine import calculate_breadth
+
+app = FastAPI()   # 👈 MUST come before any @app.get
+
+templates = Jinja2Templates(directory="templates")
+
+
+@app.get("/")
+def root():
+    return {"status": "running"}
+
 
 @app.get("/breadth")
 def breadth():
     return calculate_breadth()
 
-from fastapi.responses import HTMLResponse
-from fastapi.templating import Jinja2Templates
-from fastapi import Request
-
-templates = Jinja2Templates(directory="templates")
 
 @app.get("/dashboard", response_class=HTMLResponse)
 def dashboard(request: Request):
@@ -38,4 +26,3 @@ def dashboard(request: Request):
         "request": request,
         "data": data
     })
-

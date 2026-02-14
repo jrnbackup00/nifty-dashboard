@@ -2,28 +2,68 @@
 <html>
 <head>
     <title>Nifty Breadth Dashboard</title>
+    <meta http-equiv="refresh" content="300">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
+
 <body class="bg-dark text-light">
 
 <div class="container mt-4">
 
-    <h2 class="mb-4">Market Breadth Overview</h2>
+    <h2 class="mb-4">Market Breadth Dashboard</h2>
 
+    <!-- INDICES BANNER -->
+    <div class="row mb-4">
+
+        <div class="col-md-6">
+            <div class="card bg-black border-success">
+                <div class="card-body">
+                    <h5>NIFTY</h5>
+                    <h3>₹{{ data.indices.nifty.price }}</h3>
+                    <div class="{% if data.indices.nifty.change >= 0 %}text-success{% else %}text-danger{% endif %}">
+                        {{ data.indices.nifty.change }} ({{ data.indices.nifty.pct }}%)
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card bg-black border-warning">
+                <div class="card-body">
+                    <h5>BANK NIFTY</h5>
+                    <h3>₹{{ data.indices.banknifty.price }}</h3>
+                    <div class="{% if data.indices.banknifty.change >= 0 %}text-success{% else %}text-danger{% endif %}">
+                        {{ data.indices.banknifty.change }} ({{ data.indices.banknifty.pct }}%)
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- CATEGORY CARDS -->
     <div class="row">
 
-        {% for key, value in data.items() %}
+        {% for key, value in data.items() if key != "indices" %}
         <div class="col-md-4 mb-3">
             <div class="card bg-secondary text-light">
                 <div class="card-body">
-                    <h5 class="card-title">{{ key.replace('_', ' ').title() }}</h5>
-                    <h3>{{ value.count }}</h3>
+                    <h5>{{ key.replace('_', ' ').title() }}</h5>
+                    <h2>{{ value.count }}</h2>
 
                     <details>
                         <summary>View Stocks</summary>
-                        <div style="max-height:200px; overflow-y:auto;">
+                        <div style="max-height:250px; overflow-y:auto;">
                             {% for stock in value.stocks %}
-                                <div>{{ stock }}</div>
+                            <div class="d-flex justify-content-between border-bottom py-1">
+                                <span>{{ stock.symbol }}</span>
+                                <span>
+                                    ₹{{ stock.price }}
+                                    <span class="{% if stock.change >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                        {{ stock.change }} ({{ stock.pct }}%)
+                                    </span>
+                                </span>
+                            </div>
                             {% endfor %}
                         </div>
                     </details>

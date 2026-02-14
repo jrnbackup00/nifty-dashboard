@@ -9,7 +9,7 @@ CACHE_TTL = 300  # 5 minutes
 def calculate_breadth():
     global CACHE, LAST_UPDATED
 
-    # Return cached data if valid
+    # Return cached version if fresh
     if CACHE is not None and (time.time() - LAST_UPDATED < CACHE_TTL):
         print("Returning cached breadth data ✅")
         return CACHE
@@ -30,6 +30,9 @@ def calculate_breadth():
         "above_40_dma": []
     }
 
+    nifty_data = None
+    banknifty_data = None
+
     for data in batches:
         if data.empty:
             continue
@@ -43,37 +46,57 @@ def calculate_breadth():
                 today = df["Close"].iloc[-1]
                 yesterday = df["Close"].iloc[-2]
 
-                daily_pct = (today - yesterday) / yesterday * 100
+                change = today - yesterday
+                daily_pct = (change / yesterday) * 100
+
+                stock_data = {
+                    "symbol": symbol,
+                    "price": round(float(today), 2),
+                    "change": round(float(change), 2),
+                    "pct": round(float(daily_pct), 2)
+                }
+
+                # Capture indices
+                if symbol == "^NSEI":
+                    nifty_data = stock_data
+                if symbol == "^NSEBANK":
+                    banknifty_data = stock_data
+
+                # Classification
+                if daily_pct > 0:
+                    result["advances"].append(stock_data)
+                else:
+                    result["declines"].append(stock_data)
+
+                if daily_pct >= 4:
+                    result["up_4_percent"].append(stock_data)
+
+                if daily_pct <= -4:
+                    result["down_4_percent"].append(stock_data)
+
                 monthly_pct = (
                     (today - df["Close"].iloc[-22]) /
                     df["Close"].iloc[-22] * 100
                 )
 
-                if daily_pct > 0:
-                    result["advances"].append(symbol)
-                else:
-                    result["declines"].append(symbol)
-
-                if daily_pct >= 4:
-                    result["up_4_percent"].append(symbol)
-                if daily_pct <= -4:
-                    result["down_4_percent"].append(symbol)
-
                 if monthly_pct >= 20:
-                    result["up_20_percent_monthly"].append(symbol)
+                    result["up_20_percent_monthly"].append(stock_data)
+
                 if monthly_pct <= -20:
-                    result["down_20_percent_monthly"].append(symbol)
+                    result["down_20_percent_monthly"].append(stock_data)
 
                 dma10 = df["Close"].rolling(10).mean().iloc[-1]
                 dma20 = df["Close"].rolling(20).mean().iloc[-1]
                 dma40 = df["Close"].rolling(40).mean().iloc[-1]
 
                 if today > dma10:
-                    result["above_10_dma"].append(symbol)
+                    result["above_10_dma"].append(stock_data)
+
                 if today > dma20:
-                    result["above_20_dma"].append(symbol)
+                    result["above_20_dma"].append(stock_data)
+
                 if today > dma40:
-                    result["above_40_dma"].append(symbol)
+                    result["above_40_dma"].append(stock_data)
 
             except:
                 continue
@@ -83,10 +106,14 @@ def calculate_breadth():
     for key, stocks in result.items():
         final[key] = {
             "count": len(stocks),
-            "stocks": sorted(stocks)
+            "stocks": sorted(stocks, key=lambda x: x["symbol"])
         }
 
-    # Save to cache
+    final["indices"] = {
+        "nifty": nifty_data,
+        "banknifty": banknifty_data
+    }
+
     CACHE = final
     LAST_UPDATED = time.time()
 
