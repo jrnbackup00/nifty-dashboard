@@ -1,68 +1,50 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Nifty Breadth Dashboard</title>
+    <title>Nifty Breadth Pro</title>
     <meta http-equiv="refresh" content="300">
-
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 
     <style>
         body {
-            background-color: #111;
-            color: #f8f9fa;
-            font-family: "Segoe UI", Arial, sans-serif;
+            background-color: #0f1116;
+            color: #e0e0e0;
+            font-family: Inter, sans-serif;
         }
 
-        .metric-card {
-            border-radius: 12px;
+        .card-pro {
+            background: #1a1d24;
+            border-radius: 14px;
             padding: 20px;
-            background: #1c1c1c;
-            box-shadow: 0 0 10px rgba(0,0,0,0.4);
-            transition: 0.2s ease;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.4);
         }
 
-        .metric-card:hover {
-            transform: translateY(-3px);
+        .big-number {
+            font-size: 2.4rem;
+            font-weight: 700;
         }
 
-        .metric-title {
-            font-size: 0.9rem;
+        .positive { color: #00e676; }
+        .negative { color: #ff5252; }
+
+        .section-title {
+            font-size: 0.85rem;
             letter-spacing: 1px;
-            opacity: 0.7;
+            opacity: 0.6;
         }
 
-        .metric-value {
-            font-size: 2rem;
-            font-weight: 600;
+        .stock-row {
+            font-size: 0.85rem;
+            padding: 4px 0;
         }
 
-        .index-card {
-            background: #000;
-            border-radius: 12px;
-            padding: 20px;
+        .stock-row:hover {
+            background: rgba(255,255,255,0.05);
         }
 
-        .stock-list {
-            max-height: 300px;
+        .top-movers {
+            max-height: 260px;
             overflow-y: auto;
-            margin-top: 10px;
-            font-size: 0.85rem;
-        }
-
-        .positive {
-            color: #00c853;
-            font-weight: 600;
-        }
-
-        .negative {
-            color: #ff5252;
-            font-weight: 600;
-        }
-
-        summary {
-            cursor: pointer;
-            font-size: 0.85rem;
-            margin-top: 10px;
         }
     </style>
 </head>
@@ -71,26 +53,29 @@
 
 <div class="container-fluid p-4">
 
-    <h2 class="mb-4">📊 Nifty Market Breadth Dashboard</h2>
+    <h3 class="fw-bold mb-1">NIFTY MARKET BREADTH DASHBOARD</h3>
+    <p class="text-muted mb-4">Auto-refreshing every 5 minutes</p>
 
     <!-- INDEX BANNER -->
     <div class="row mb-4">
 
         <div class="col-md-6">
-            <div class="index-card">
-                <div class="metric-title">NIFTY 50</div>
-                <div class="metric-value">₹{{ data.indices.nifty.price }}</div>
+            <div class="card-pro">
+                <div class="section-title">NIFTY 50</div>
+                <div class="big-number">₹{{ data.indices.nifty.price }}</div>
                 <div class="{% if data.indices.nifty.change >= 0 %}positive{% else %}negative{% endif %}">
+                    {% if data.indices.nifty.change >= 0 %}▲{% else %}▼{% endif %}
                     {{ data.indices.nifty.change }} ({{ data.indices.nifty.pct }}%)
                 </div>
             </div>
         </div>
 
         <div class="col-md-6">
-            <div class="index-card">
-                <div class="metric-title">BANK NIFTY</div>
-                <div class="metric-value">₹{{ data.indices.banknifty.price }}</div>
+            <div class="card-pro">
+                <div class="section-title">BANK NIFTY</div>
+                <div class="big-number">₹{{ data.indices.banknifty.price }}</div>
                 <div class="{% if data.indices.banknifty.change >= 0 %}positive{% else %}negative{% endif %}">
+                    {% if data.indices.banknifty.change >= 0 %}▲{% else %}▼{% endif %}
                     {{ data.indices.banknifty.change }} ({{ data.indices.banknifty.pct }}%)
                 </div>
             </div>
@@ -98,43 +83,68 @@
 
     </div>
 
-    <!-- METRICS GRID -->
-    <div class="row">
+    <!-- BREADTH SUMMARY -->
+    <div class="row mb-4">
 
-        {% for key, value in data.items() if key != "indices" %}
-        <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
-            <div class="metric-card">
-
-                <div class="metric-title">
-                    {{ key.replace('_', ' ').title() }}
-                </div>
-
-                <div class="metric-value">
-                    {{ value.count }}
-                </div>
-
-                <details>
-                    <summary>View Stocks</summary>
-
-                    <div class="stock-list">
-                        {% for stock in value.stocks %}
-                        <div class="d-flex justify-content-between border-bottom py-1">
-                            <span>{{ stock.symbol }}</span>
-                            <span>
-                                ₹{{ stock.price }}
-                                <span class="{% if stock.change >= 0 %}positive{% else %}negative{% endif %}">
-                                    {{ stock.change }} ({{ stock.pct }}%)
-                                </span>
-                            </span>
-                        </div>
-                        {% endfor %}
-                    </div>
-
-                </details>
-
+        <div class="col-md-4">
+            <div class="card-pro text-center">
+                <div class="section-title">ADVANCES</div>
+                <div class="big-number positive">{{ data.summary.advances }}</div>
             </div>
         </div>
-        {% endfor %}
+
+        <div class="col-md-4">
+            <div class="card-pro text-center">
+                <div class="section-title">DECLINES</div>
+                <div class="big-number negative">{{ data.summary.declines }}</div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card-pro text-center">
+                <div class="section-title">ADV/DEC RATIO</div>
+                <div class="big-number">
+                    {{ data.summary.ratio }}
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- TOP MOVERS -->
+    <div class="row">
+
+        <div class="col-md-6">
+            <div class="card-pro">
+                <div class="section-title mb-2">TOP GAINERS (4%+)</div>
+                <div class="top-movers">
+                    {% for stock in data.up_4_percent.stocks[:10] %}
+                    <div class="d-flex justify-content-between stock-row">
+                        <span>{{ stock.symbol }}</span>
+                        <span class="positive">
+                            ▲ {{ stock.pct }}%
+                        </span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card-pro">
+                <div class="section-title mb-2">TOP LOSERS (-4%+)</div>
+                <div class="top-movers">
+                    {% for stock in data.down_4_percent.stocks[:10] %}
+                    <div class="d-flex justify-content-between stock-row">
+                        <span>{{ stock.symbol }}</span>
+                        <span class="negative">
+                            ▼ {{ stock.pct }}%
+                        </span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
 
     </div>
 

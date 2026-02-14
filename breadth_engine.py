@@ -117,6 +117,17 @@ def calculate_breadth():
             "count": len(stocks),
             "stocks": sorted_stocks
         }
+        # -------- BREADTH SUMMARY --------
+        adv = len(result["advances"])
+        dec = len(result["declines"])
+
+        ratio = round(adv / dec, 2) if dec > 0 else None
+
+        final["summary"] = {
+            "advances": adv,
+            "declines": dec,
+            "ratio": ratio
+        }
 
 
     final["indices"] = {
@@ -128,3 +139,8 @@ def calculate_breadth():
     LAST_UPDATED = time.time()
 
     return final
+
+if __name__ == "__main__":
+    data = calculate_breadth()
+    print(data)
+
