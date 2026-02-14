@@ -1,8 +1,20 @@
-import pandas as pd
+import time
 from data_fetcher import fetch_market_data
+
+CACHE = None
+LAST_UPDATED = 0
+CACHE_TTL = 300  # 5 minutes
 
 
 def calculate_breadth():
+    global CACHE, LAST_UPDATED
+
+    # Return cached data if valid
+    if CACHE is not None and (time.time() - LAST_UPDATED < CACHE_TTL):
+        print("Returning cached breadth data ✅")
+        return CACHE
+
+    print("Calculating fresh breadth data 🔄")
 
     batches = fetch_market_data(60)
 
@@ -19,12 +31,10 @@ def calculate_breadth():
     }
 
     for data in batches:
-
         if data.empty:
             continue
 
         for symbol in data.columns.levels[0]:
-
             try:
                 df = data[symbol].dropna()
                 if len(df) < 40:
@@ -46,13 +56,11 @@ def calculate_breadth():
 
                 if daily_pct >= 4:
                     result["up_4_percent"].append(symbol)
-
                 if daily_pct <= -4:
                     result["down_4_percent"].append(symbol)
 
                 if monthly_pct >= 20:
                     result["up_20_percent_monthly"].append(symbol)
-
                 if monthly_pct <= -20:
                     result["down_20_percent_monthly"].append(symbol)
 
@@ -70,16 +78,16 @@ def calculate_breadth():
             except:
                 continue
 
-    # Convert to count + list format
     final = {}
+
     for key, stocks in result.items():
         final[key] = {
             "count": len(stocks),
             "stocks": sorted(stocks)
         }
 
+    # Save to cache
+    CACHE = final
+    LAST_UPDATED = time.time()
+
     return final
-
-
-if __name__ == "__main__":
-    print(calculate_breadth())
