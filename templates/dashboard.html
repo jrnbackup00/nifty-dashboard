@@ -87,6 +87,40 @@
         </div>
 
     </div>
+    <div class="container mt-3 mb-4">
+
+    <form method="get" action="/dashboard" class="row g-3">
+
+        <div class="col-md-3">
+            <label class="form-label">5 D EMA</label>
+            <select name="ema5" class="form-select">
+                <option value="">Not Selected</option>
+                <option value="above" {% if ema5 == "above" %}selected{% endif %}>Above 5 D EMA</option>
+                <option value="below" {% if ema5 == "below" %}selected{% endif %}>Below 5 D EMA</option>
+            </select>
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label">20 D EMA</label>
+            <select name="ema20" class="form-select">
+                <option value="">Not Selected</option>
+                <option value="above" {% if ema20 == "above" %}selected{% endif %}>Above 20 D EMA</option>
+                <option value="below" {% if ema20 == "below" %}selected{% endif %}>Below 20 D EMA</option>
+            </select>
+        </div>
+
+        <div class="col-md-2 align-self-end">
+            <button type="submit" class="btn btn-primary w-100">Apply</button>
+        </div>
+
+        <div class="col-md-2 align-self-end">
+            <a href="/dashboard" class="btn btn-secondary w-100">Reset</a>
+        </div>
+
+    </form>
+
+</div>
+
 
     <div class="row">
 
