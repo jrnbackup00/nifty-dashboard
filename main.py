@@ -18,3 +18,9 @@ def get_stocks():
         "count": len(stocks),
         "stocks": stocks
     }
+
+from breadth_engine import calculate_breadth
+
+@app.get("/breadth")
+def breadth():
+    return calculate_breadth()

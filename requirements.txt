@@ -3,3 +3,5 @@ uvicorn[standard]==0.30.0
 
 pandas
 requests
+
+pip3 freeze > requirements.txt
