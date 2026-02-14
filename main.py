@@ -24,3 +24,18 @@ from breadth_engine import calculate_breadth
 @app.get("/breadth")
 def breadth():
     return calculate_breadth()
+
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
+from fastapi import Request
+
+templates = Jinja2Templates(directory="templates")
+
+@app.get("/dashboard", response_class=HTMLResponse)
+def dashboard(request: Request):
+    data = calculate_breadth()
+    return templates.TemplateResponse("dashboard.html", {
+        "request": request,
+        "data": data
+    })
+
