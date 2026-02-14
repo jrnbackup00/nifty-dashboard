@@ -1,3 +1,5 @@
+print("NEW VERSION LOADED 🚀 AUTO UNIVERSE")
+
 from fastapi import FastAPI
 
 print("APP STARTED SUCCESSFULLY 🚀")
