@@ -4,4 +4,5 @@ app = FastAPI()
 
 @app.get("/")
 def home():
-    return {"message": "Nifty Dashboard Running Successfully 🚀"}
+    return {"status": "Nifty Dashboard Running 🚀"}
+
