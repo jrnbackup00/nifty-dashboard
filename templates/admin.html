@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Panel</title>
+</head>
+<body>
+
+<h2>Admin Panel</h2>
+
+<h3>Add User</h3>
+
+<form method="post" action="/admin/add-user">
+    <input type="email" name="email" placeholder="User email" required>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+    <select name="role">
+        <option value="viewer">Viewer</option>
+        <option value="admin">Admin</option>
+    </select>
+
+    <button type="submit">Add User</button>
+</form>
+
+<hr>
+
+<table border="1">
+    <tr>
+        <th>Email</th>
+        <th>Role</th>
+        <th>Actions</th>
+    </tr>
+
+    {% for u in users %}
+    <tr>
+        <td>{{ u.email }}</td>
+
+        <td>
+            <form method="post" action="/admin/update-role">
+                <input type="hidden" name="email" value="{{ u.email }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+                <select name="role">
+                    <option value="viewer" {% if u.role == "viewer" %}selected{% endif %}>Viewer</option>
+                    <option value="admin" {% if u.role == "admin" %}selected{% endif %}>Admin</option>
+                </select>
+
+                <button type="submit">Update</button>
+            </form>
+        </td>
+
+        <td>
+            {% if u.email != user.email %}
+            <form method="post" action="/admin/delete-user" onsubmit="return confirm('Are you sure you want to delete this user?')">
+                <input type="hidden" name="email" value="{{ u.email }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <button type="submit">Delete</button>
+            </form>
+            {% else %}
+                (You)
+            {% endif %}
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+
+<br>
+<a href="/dashboard">Back to Dashboard</a>
+
+</body>
+</html>

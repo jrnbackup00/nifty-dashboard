@@ -53,10 +53,64 @@
             cursor: pointer;
             font-size: 0.85rem;
         }
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #111827;
+            padding: 12px 24px;
+            color: white;
+        }
+
+        .navbar a {
+            color: #e5e7eb;
+            margin-right: 20px;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .navbar a:hover {
+            color: #3b82f6;
+        }
+
+        .brand {
+            font-weight: bold;
+            font-size: 18px;
+            margin-right: 30px;
+        }
+
+        .user-email {
+            margin-right: 20px;
+            color: #9ca3af;
+        }
+
+        .logout-btn {
+            background-color: #ef4444;
+            padding: 6px 12px;
+            border-radius: 6px;
+            color: white;
+        }
     </style>
 </head>
 
 <body>
+
+    <nav class="navbar">
+    <div class="nav-left">
+        <span class="brand">Nifty Dashboard</span>
+        <a href="/dashboard">Dashboard</a>
+        {% if user and user.role == "admin" %}
+            <a href="/admin">Admin</a>
+        {% endif %}
+    </div>
+
+    <div class="nav-right">
+        {% if user %}
+            <span class="user-email">{{ user.email }}</span>
+            <a href="/logout" class="logout-btn">Logout</a>
+        {% endif %}
+    </div>
+</nav>
 
 <div class="container-fluid p-4">
 
@@ -70,9 +124,11 @@
             <div class="card-pro">
                 <div class="card-title">NIFTY 50</div>
                 <div class="big-number">₹{{ data.indices.nifty.price }}</div>
-                <div class="{% if data.indices.nifty.change >= 0 %}positive{% else %}negative{% endif %}">
-                    {{ data.indices.nifty.change }} ({{ data.indices.nifty.pct }}%)
-                </div>
+            {% if data.indices and data.indices.nifty %}
+            <div class="{% if data.indices.nifty.change >= 0 %}positive{% else %}negative{% endif %}">
+                {% else %}
+            <div class="neutral">
+            {% endif %}
             </div>
         </div>
 
@@ -80,9 +136,11 @@
             <div class="card-pro">
                 <div class="card-title">BANK NIFTY</div>
                 <div class="big-number">₹{{ data.indices.banknifty.price }}</div>
+                {% if data.indices and data.indices.banknifty %}
                 <div class="{% if data.indices.banknifty.change >= 0 %}positive{% else %}negative{% endif %}">
-                    {{ data.indices.banknifty.change }} ({{ data.indices.banknifty.pct }}%)
-                </div>
+                {% else %}
+                <div class="neutral">
+                {% endif %}
             </div>
         </div>
 

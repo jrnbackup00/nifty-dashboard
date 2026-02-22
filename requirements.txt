@@ -5,3 +5,7 @@ pandas
 requests
 yfinance
 jinja2
+authlib
+itsdangerous
+python-multipart
+python-dotenv

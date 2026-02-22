@@ -27,6 +27,19 @@ def calculate_breadth(ema5_filter=None, ema20_filter=None):
 
     batches = fetch_market_data(60)
 
+    # SAFE DEFAULT INDEX DATA
+    nifty_data = {
+        "close": 0,
+        "change": 0,
+        "pct_change": 0
+    }
+
+    banknifty_data = {
+        "close": 0,
+        "change": 0,
+        "pct_change": 0
+    }
+
     result = {
         "advances": [],
         "declines": [],
@@ -38,9 +51,6 @@ def calculate_breadth(ema5_filter=None, ema20_filter=None):
         "above_20_dma": [],
         "above_40_dma": []
     }
-
-    nifty_data = None
-    banknifty_data = None
 
     # ---------------------------
     # Main Loop
@@ -77,20 +87,28 @@ def calculate_breadth(ema5_filter=None, ema20_filter=None):
                 }
 
                 # ---------------------------
-                # CAPTURE INDICES FIRST
+                # CAPTURE INDICES
                 # ---------------------------
                 if symbol == "^NSEI":
                     print("INDEX FOUND: NSEI")
-                    nifty_data = stock_data
+                    nifty_data = {
+                        "close": stock_data["price"],
+                        "change": stock_data["change"],
+                        "pct_change": stock_data["pct"]
+                    }
                     continue
 
                 if symbol == "^NSEBANK":
                     print("INDEX FOUND: NSEBANK")
-                    banknifty_data = stock_data
+                    banknifty_data = {
+                        "close": stock_data["price"],
+                        "change": stock_data["change"],
+                        "pct_change": stock_data["pct"]
+                    }
                     continue
 
                 # ---------------------------
-                # APPLY EMA FILTERS (AND)
+                # EMA FILTERS
                 # ---------------------------
                 if ema5_filter == "above" and not stock_data["above_ema5"]:
                     continue
@@ -147,24 +165,39 @@ def calculate_breadth(ema5_filter=None, ema20_filter=None):
                 continue
 
     # ---------------------------
-    # SORTING
+    # BUILD FINAL OUTPUT STRUCTURE
     # ---------------------------
     final = {}
 
-    for key, stocks in result.items():
+    stock_categories = [
+        "advances",
+        "declines",
+        "up_4_percent",
+        "down_4_percent",
+        "up_20_percent_monthly",
+        "down_20_percent_monthly",
+        "above_10_dma",
+        "above_20_dma",
+        "above_40_dma"
+    ]
 
-        if key in ["declines", "down_4_percent", "down_20_percent_monthly"]:
+    for category in stock_categories:
+
+        stocks = result[category]
+
+        # ascending for negative groups
+        if category in ["declines", "down_4_percent", "down_20_percent_monthly"]:
             sorted_stocks = sorted(stocks, key=lambda x: x["pct"])
         else:
             sorted_stocks = sorted(stocks, key=lambda x: x["pct"], reverse=True)
 
-        final[key] = {
+        final[category] = {
             "count": len(sorted_stocks),
             "stocks": sorted_stocks
         }
 
     # ---------------------------
-    # SAFE INDEX BLOCK
+    # ADD INDEX DATA
     # ---------------------------
     final["indices"] = {
         "nifty": nifty_data,
@@ -172,7 +205,7 @@ def calculate_breadth(ema5_filter=None, ema20_filter=None):
     }
 
     # ---------------------------
-    # SAVE CACHE
+    # SAVE TO CACHE
     # ---------------------------
     CACHE[cache_key] = (time.time(), final)
 
