@@ -133,7 +133,12 @@ async def login(request: Request):
     if request.session.get("user"):
         return RedirectResponse("/dashboard")
 
-    redirect_uri = request.url_for("auth")
+    base_url = os.getenv("BASE_URL")
+
+    if base_url:
+        redirect_uri = f"{base_url}/auth"
+    else:
+        redirect_uri = request.url_for("auth")
 
     return await oauth.google.authorize_redirect(
         request,
@@ -141,12 +146,21 @@ async def login(request: Request):
         prompt="select_account"
     )
 
-
-
 @app.get("/login/google")
 async def login_google(request: Request):
-    redirect_uri = request.url_for("auth")
-    return await oauth.google.authorize_redirect(request, redirect_uri)
+
+    base_url = os.getenv("BASE_URL")
+
+    if base_url:
+        redirect_uri = f"{base_url}/auth"
+    else:
+        redirect_uri = request.url_for("auth")
+
+    return await oauth.google.authorize_redirect(
+        request,
+        redirect_uri
+    )
+
 
 @app.get("/auth")
 async def auth(request: Request):
