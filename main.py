@@ -65,7 +65,7 @@ app.add_middleware(
     https_only=True
 )
 
-app.add_middleware(AuthMiddleware)
+
 # --------------------------
 # AUTH MIDDLEWARE (GLOBAL)
 # --------------------------
@@ -106,6 +106,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
 
         return await call_next(request)
 
+app.add_middleware(AuthMiddleware)
 
 
 
