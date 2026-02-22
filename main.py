@@ -54,7 +54,7 @@ PERMISSIONS = {
     "trader": ["/dashboard", "/fno"],
     "admin": ["*"]  # full access
 }
-
+"""""
 # --------------------------
 # SESSION MIDDLEWARE
 # --------------------------
@@ -64,7 +64,7 @@ app.add_middleware(
     same_site="lax",
     https_only=True
 )
-
+"""""
 
 # --------------------------
 # AUTH MIDDLEWARE (GLOBAL)
@@ -108,7 +108,15 @@ class AuthMiddleware(BaseHTTPMiddleware):
 
 app.add_middleware(AuthMiddleware)
 
-
+# --------------------------
+# SESSION MIDDLEWARE
+# --------------------------
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=os.getenv("SESSION_SECRET"),
+    same_site="lax",
+    https_only=True
+)
 
 # --------------------------
 # LOGIN ROUTES
