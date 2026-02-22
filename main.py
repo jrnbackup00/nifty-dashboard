@@ -65,6 +65,7 @@ app.add_middleware(
     https_only=True
 )
 
+app.add_middleware(AuthMiddleware)
 # --------------------------
 # AUTH MIDDLEWARE (GLOBAL)
 # --------------------------
@@ -75,7 +76,8 @@ class AuthMiddleware(BaseHTTPMiddleware):
             "/login",
             "/auth",
             "/logout",
-            "/login/google"
+            "/login/google",
+            "/static"
         ]
 
         # Allow static files
@@ -167,10 +169,13 @@ async def logout(request: Request):
     request.session.clear()
     return RedirectResponse(url="/login", status_code=302)
 
+@app.get("/")
+def root():
+    return RedirectResponse("/dashboard")
+
 # --------------------------
 # DASHBOARD
 # --------------------------
-@app.get("/", response_class=HTMLResponse)
 
 
 @app.get("/admin", response_class=HTMLResponse)
