@@ -4,7 +4,7 @@ load_dotenv()
 from fastapi import FastAPI, Request, Query
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
-from starlette.middleware.httpsredirect import HTTPSRedirectMiddleware
+# from starlette.middleware.httpsredirect import HTTPSRedirectMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 from authlib.integrations.starlette_client import OAuth
@@ -120,7 +120,7 @@ app.add_middleware(
 )
 
 # Force HTTPS first
-app.add_middleware(HTTPSRedirectMiddleware)
+# app.add_middleware(HTTPSRedirectMiddleware)
 
 # --------------------------
 # LOGIN ROUTES
