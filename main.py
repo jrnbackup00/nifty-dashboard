@@ -56,6 +56,16 @@ PERMISSIONS = {
 }
 
 # --------------------------
+# SESSION MIDDLEWARE
+# --------------------------
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=os.getenv("SESSION_SECRET"),
+    same_site="lax",
+    https_only=True
+)
+
+# --------------------------
 # AUTH MIDDLEWARE (GLOBAL)
 # --------------------------
 class AuthMiddleware(BaseHTTPMiddleware):
@@ -95,15 +105,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
         return await call_next(request)
 
 
-# --------------------------
-# SESSION MIDDLEWARE
-# --------------------------
-app.add_middleware(
-    SessionMiddleware,
-    secret_key=os.getenv("SESSION_SECRET"),
-    same_site="lax",
-    https_only=True
-)
+
 
 # --------------------------
 # LOGIN ROUTES
