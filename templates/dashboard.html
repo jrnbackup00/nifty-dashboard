@@ -120,29 +120,43 @@
     <!-- INDEX BANNER -->
     <div class="row mb-4">
 
-        <div class="col-md-6">
-            <div class="card-pro">
-                <div class="card-title">NIFTY 50</div>
-                <div class="big-number">₹{{ data.indices.nifty.price }}</div>
-            {% if data.indices and data.indices.nifty %}
-            <div class="{% if data.indices.nifty.change >= 0 %}positive{% else %}negative{% endif %}">
-                {% else %}
-            <div class="neutral">
-            {% endif %}
-            </div>
-        </div>
+       <div class="col-md-6">
+        <div class="card-pro">
+            <div class="card-title">NIFTY 50</div>
 
-        <div class="col-md-6">
-            <div class="card-pro">
-                <div class="card-title">BANK NIFTY</div>
-                <div class="big-number">₹{{ data.indices.banknifty.price }}</div>
-                {% if data.indices and data.indices.banknifty %}
-                <div class="{% if data.indices.banknifty.change >= 0 %}positive{% else %}negative{% endif %}">
-                {% else %}
-                <div class="neutral">
-                {% endif %}
+            <div class="big-number">
+            ₹{{ data.indices.nifty.close if data.indices.nifty.close else "—" }}
             </div>
+
+            {% if data.indices and data.indices.nifty and data.indices.nifty.change is not none %}
+            <div class="{% if data.indices.nifty.change >= 0 %}positive{% else %}negative{% endif %}">
+                {{ data.indices.nifty.change }}
+                ({{ data.indices.nifty.pct_change }}%)
+            </div>
+            {% else %}
+            <div class="neutral">Data Unavailable</div>
+            {% endif %}
         </div>
+<      </div>
+
+    <div class="col-md-6">
+        <div class="card-pro">
+            <div class="card-title">BANK NIFTY</div>
+
+            <div class="big-number">
+            ₹{{ data.indices.banknifty.close if data.indices.banknifty.close else "—" }}
+            </div>
+
+            {% if data.indices and data.indices.banknifty and data.indices.banknifty.change is not none %}
+            <div class="{% if data.indices.banknifty.change >= 0 %}positive{% else %}negative{% endif %}">
+                {{ data.indices.banknifty.change }}
+                ({{ data.indices.banknifty.pct_change }}%)
+            </div>
+            {% else %}
+            <div class="neutral">Data Unavailable</div>
+            {% endif %}
+        </div>
+    </div>
 
     </div>
     <div class="container mt-3 mb-4">
