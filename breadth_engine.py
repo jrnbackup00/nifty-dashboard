@@ -1,4 +1,5 @@
 import time
+import yfinance as yf
 from data_fetcher import fetch_market_data
 
 # ---------------------------
@@ -8,9 +9,43 @@ CACHE = {}
 CACHE_TTL = 300  # seconds
 
 
-def calculate_breadth(ema5_filter=None, ema20_filter=None):
+# ---------------------------
+# SAFE INDEX FETCHER
+# ---------------------------
+def get_index_data(symbol):
+    try:
+        df = yf.Ticker(symbol).history(period="2d")
 
-    print("FILTERS:", ema5_filter, ema20_filter)
+        if df.empty or len(df) < 2:
+            print(f"Index fetch failed for {symbol}")
+            return {
+                "close": None,
+                "change": None,
+                "pct_change": None
+            }
+
+        today = df["Close"].iloc[-1]
+        yesterday = df["Close"].iloc[-2]
+
+        change = today - yesterday
+        pct = (change / yesterday) * 100
+
+        return {
+            "close": round(float(today), 2),
+            "change": round(float(change), 2),
+            "pct_change": round(float(pct), 2)
+        }
+
+    except Exception as e:
+        print(f"Index error {symbol}:", e)
+        return {
+            "close": None,
+            "change": None,
+            "pct_change": None
+        }
+
+
+def calculate_breadth(ema5_filter=None, ema20_filter=None):
 
     cache_key = f"{ema5_filter}_{ema20_filter}"
 
@@ -20,25 +55,9 @@ def calculate_breadth(ema5_filter=None, ema20_filter=None):
     if cache_key in CACHE:
         cached_time, cached_data = CACHE[cache_key]
         if time.time() - cached_time < CACHE_TTL:
-            print("Returning cached result ✅")
             return cached_data
 
-    print("Calculating fresh breadth 🔄")
-
     batches = fetch_market_data(60)
-
-    # SAFE DEFAULT INDEX DATA
-    nifty_data = {
-        "close": 0,
-        "change": 0,
-        "pct_change": 0
-    }
-
-    banknifty_data = {
-        "close": 0,
-        "change": 0,
-        "pct_change": 0
-    }
 
     result = {
         "advances": [],
@@ -85,27 +104,6 @@ def calculate_breadth(ema5_filter=None, ema20_filter=None):
                     "above_ema5": today > ema5,
                     "above_ema20": today > ema20
                 }
-
-                # ---------------------------
-                # CAPTURE INDICES
-                # ---------------------------
-                if symbol == "^NSEI":
-                    print("INDEX FOUND: NSEI")
-                    nifty_data = {
-                        "close": stock_data["price"],
-                        "change": stock_data["change"],
-                        "pct_change": stock_data["pct"]
-                    }
-                    continue
-
-                if symbol == "^NSEBANK":
-                    print("INDEX FOUND: NSEBANK")
-                    banknifty_data = {
-                        "close": stock_data["price"],
-                        "change": stock_data["change"],
-                        "pct_change": stock_data["pct"]
-                    }
-                    continue
 
                 # ---------------------------
                 # EMA FILTERS
@@ -165,27 +163,14 @@ def calculate_breadth(ema5_filter=None, ema20_filter=None):
                 continue
 
     # ---------------------------
-    # BUILD FINAL OUTPUT STRUCTURE
+    # SORT & FORMAT
     # ---------------------------
     final = {}
 
-    stock_categories = [
-        "advances",
-        "declines",
-        "up_4_percent",
-        "down_4_percent",
-        "up_20_percent_monthly",
-        "down_20_percent_monthly",
-        "above_10_dma",
-        "above_20_dma",
-        "above_40_dma"
-    ]
-
-    for category in stock_categories:
+    for category in result:
 
         stocks = result[category]
 
-        # ascending for negative groups
         if category in ["declines", "down_4_percent", "down_20_percent_monthly"]:
             sorted_stocks = sorted(stocks, key=lambda x: x["pct"])
         else:
@@ -197,15 +182,15 @@ def calculate_breadth(ema5_filter=None, ema20_filter=None):
         }
 
     # ---------------------------
-    # ADD INDEX DATA
+    # FETCH INDICES SEPARATELY
     # ---------------------------
     final["indices"] = {
-        "nifty": nifty_data,
-        "banknifty": banknifty_data
+        "nifty": get_index_data("^NSEI"),
+        "banknifty": get_index_data("^NSEBANK")
     }
 
     # ---------------------------
-    # SAVE TO CACHE
+    # CACHE
     # ---------------------------
     CACHE[cache_key] = (time.time(), final)
 
