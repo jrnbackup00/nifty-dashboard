@@ -180,7 +180,16 @@ async def auth(request: Request):
 
     user = get_user(email)   # ← must return dict with role
 
+   ### if not user:
+      ###  return HTMLResponse("<h2>Access Denied</h2>", status_code=403)
+
     if not user:
+        from auth_db import add_user, count_admins
+
+    if count_admins() == 0:
+        add_user(email, "admin")
+        user = get_user(email)
+    else:
         return HTMLResponse("<h2>Access Denied</h2>", status_code=403)
 
     request.session["user"] = {
