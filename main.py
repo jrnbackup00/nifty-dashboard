@@ -11,7 +11,7 @@ from authlib.integrations.starlette_client import OAuth
 from starlette.responses import RedirectResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 from breadth_engine import calculate_breadth
-from auth_db import init_db, get_user, has_permission
+##from auth_db import init_db, get_user, has_permission
 from auth_db import get_user, get_all_users
 from fastapi import Form
 from fastapi.responses import RedirectResponse
@@ -19,6 +19,8 @@ from auth_db import add_user
 from auth_db import update_user_role
 from auth_db import delete_user
 from auth_db import delete_user, count_admins
+from init_db import init_db
+from user_service import get_user_by_email
 
 import secrets
 
@@ -178,15 +180,15 @@ async def auth(request: Request):
     if not email:
         return HTMLResponse("<h2>Email not found</h2>", status_code=400)
 
-    user = get_user(email)
+    user = get_user_by_email(email)
 
-    # STRICT: Only pre-approved users allowed
     if not user:
         return HTMLResponse("<h2>Access Denied</h2>", status_code=403)
 
     request.session["user"] = {
-        "email": user["email"],
-        "role": user["role"]
+    "email": user.email,
+    "role": user.role,
+    "plan_type": user.plan_type
     }
 
     return RedirectResponse("/dashboard", status_code=302)
