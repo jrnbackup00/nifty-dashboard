@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container mt-4 mb-5">
+
+    <!-- HEADER -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="fw-bold mb-1">Strategy Lab</h3>
+            <p class="text-muted mb-0">
+                EMA Cross Scanner • Supertrend Confirmation • Institutional View
+            </p>
+        </div>
+
+        <form method="post" action="/admin/run-ingestion">
+            <button type="submit" class="btn btn-outline-dark">
+                ⟳ Refresh Market Data
+            </button>
+        </form>
+    </div>
+
+
+    <!-- FILTER CARD -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+
+            <form method="post" action="/admin/strategy-lab">
+                <div class="row g-3">
+
+                    <!-- STRATEGY -->
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">Strategy</label>
+                        <select name="strategy_type" class="form-select" required>
+                            <option value="">Select Strategy</option>
+
+                            <option value="cross_above"
+                                {% if selected_strategy == "cross_above" %}selected{% endif %}>
+                                5 EMA Crossing Above 20 EMA
+                            </option>
+
+                            <option value="cross_below"
+                                {% if selected_strategy == "cross_below" %}selected{% endif %}>
+                                5 EMA Crossing Below 20 EMA
+                            </option>
+                        </select>
+                    </div>
+
+                    <!-- TIMEFRAME -->
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">Timeframe</label>
+                        <select name="timeframe" class="form-select" required>
+                            <option value="">Select Timeframe</option>
+
+                            <option value="2h"
+                                {% if selected_timeframe == "2h" %}selected{% endif %}>
+                                2 Hour (Indices Only)
+                            </option>
+
+                            <option value="daily"
+                                {% if selected_timeframe == "daily" %}selected{% endif %}>
+                                Daily
+                            </option>
+
+                            <option value="weekly"
+                                {% if selected_timeframe == "weekly" %}selected{% endif %}>
+                                Weekly
+                            </option>
+
+                            <option value="monthly"
+                                {% if selected_timeframe == "monthly" %}selected{% endif %}>
+                                Monthly
+                            </option>
+                        </select>
+                    </div>
+
+                    <!-- LOOKBACK -->
+                    <div class="col-md-2">
+                        <label class="form-label fw-semibold">Lookback</label>
+                        <select name="lookback" class="form-select" required>
+                            {% for n in [1,2,3,4,5] %}
+                                <option value="{{ n }}"
+                                    {% if selected_lookback == n %}selected{% endif %}>
+                                    {{ n }} Candle{% if n > 1 %}s{% endif %}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- RUN BUTTON -->
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="submit" class="btn btn-dark w-100">
+                            Run Scan
+                        </button>
+                    </div>
+
+                </div>
+            </form>
+
+        </div>
+    </div>
+
+
+    <!-- RESULTS SECTION -->
+    {% if results %}
+
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+
+                    <thead class="table-light">
+                        <tr>
+                            <th>Symbol</th>
+                            <th>Price</th>
+                            <th>EMA 5</th>
+                            <th>EMA 20</th>
+                            <th>EMA 55</th>
+                            <th>EMA 80</th>
+                            <th>EMA 200</th>
+                            <th>Supertrend</th>
+                            <th>ST Value</th>
+                            <th>Bars Since Cross</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for r in results %}
+                        <tr>
+
+                            <td class="fw-semibold">{{ r.symbol }}</td>
+                            <td>{{ r.price }}</td>
+                            <td>{{ r.ema5 }}</td>
+                            <td>{{ r.ema20 }}</td>
+                            <td>{{ r.ema55 }}</td>
+                            <td>{{ r.ema80 }}</td>
+                            <td>{{ r.ema200 }}</td>
+
+                            <td>
+                                {% if r.st_direction == "UP" %}
+                                    <span class="badge bg-success">UP</span>
+                                {% elif r.st_direction == "DOWN" %}
+                                    <span class="badge bg-danger">DOWN</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">NA</span>
+                                {% endif %}
+                            </td>
+
+                            <td>
+                                {% if r.st_value %}
+                                    {{ r.st_value }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+
+                            <td>
+                                <span class="badge bg-dark">
+                                    {{ r.bars_since_cross }}
+                                </span>
+                            </td>
+
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+
+                </table>
+            </div>
+
+        </div>
+    </div>
+
+    {% elif selected_strategy %}
+
+        <div class="alert alert-warning">
+            No signals found for selected criteria.
+        </div>
+
+    {% endif %}
+
+</div>
+
+{% endblock %}

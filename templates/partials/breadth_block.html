@@ -1,0 +1,62 @@
+<div class="accordion" id="accordion_{{ category }}">
+
+    <div class="accordion-item shadow-soft border-0">
+
+        <h2 class="accordion-header" id="heading_{{ category }}">
+            <button class="accordion-button collapsed fw-semibold"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#collapse_{{ category }}"
+                    aria-expanded="false">
+
+                {{ category.replace("_", " ").title() }}
+
+                <span class="badge bg-dark ms-3">
+                    {{ info.count }} ({{ info.percent }}%)
+                </span>
+
+            </button>
+        </h2>
+
+        <div id="collapse_{{ category }}"
+             class="accordion-collapse collapse"
+             data-bs-parent="#accordion_{{ category }}">
+
+            <div class="accordion-body p-0">
+
+                {% if info.stocks %}
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Symbol</th>
+                                <th>Price</th>
+                                <th>Change</th>
+                                <th>%</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for stock in info.stocks %}
+                            <tr>
+                                <td class="fw-semibold">{{ stock.symbol }}</td>
+                                <td>{{ stock.price }}</td>
+                                <td>{{ stock.change }}</td>
+                                <td>{{ stock.pct }}%</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="p-3 text-muted">
+                    No stocks in this category.
+                </div>
+                {% endif %}
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>

@@ -1,9 +1,10 @@
 import yfinance as yf
-from datetime import timezone
+from datetime import datetime, timezone
+from sqlalchemy.dialects.postgresql import insert
 from database import SessionLocal
 from models import MarketCandle
-from sqlalchemy.dialects.postgresql import insert
 from universe import load_stock_universe
+
 
 # ----------------------------
 # CONFIG
@@ -16,13 +17,13 @@ DAILY_SYMBOLS = STOCK_SYMBOLS + INDEX_SYMBOLS
 INTRADAY_SYMBOLS = INDEX_SYMBOLS  # only indices get 2h
 
 TIMEFRAMES = {
-    "1d": {"interval": "1d", "period": "90d"},
-    "2h": {"interval": "60m", "period": "60d"},
+    "1d": {"interval": "1d", "period": "7d"},
+    "2h": {"interval": "60m", "period": "7d"},
 }
 
 
 # ----------------------------
-# INGEST FUNCTION
+# CORE SAVE FUNCTION
 # ----------------------------
 
 def save_candles(symbol, timeframe, interval, period):
@@ -45,40 +46,62 @@ def save_candles(symbol, timeframe, interval, period):
     db = SessionLocal()
 
     try:
+        today_utc = datetime.now(timezone.utc).date()
+
         records = []
 
         for timestamp, row in df.iterrows():
-            records.append({
+            ts = timestamp.to_pydatetime().astimezone(timezone.utc)
+
+            record = {
                 "symbol": symbol,
                 "timeframe": timeframe,
-                "timestamp": timestamp.to_pydatetime().replace(tzinfo=timezone.utc),
+                "timestamp": ts,
                 "open": float(row["Open"]),
                 "high": float(row["High"]),
                 "low": float(row["Low"]),
                 "close": float(row["Close"]),
                 "volume": int(row["Volume"]),
-            })
+            }
+
+            records.append(record)
+
+        if not records:
+            return
 
         stmt = insert(MarketCandle).values(records)
 
-        stmt = stmt.on_conflict_do_nothing(
-            index_elements=["symbol", "timeframe", "timestamp"]
+        # Upsert — update only today's candles
+        stmt = stmt.on_conflict_do_update(
+            index_elements=["symbol", "timeframe", "timestamp"],
+            set_={
+                "open": stmt.excluded.open,
+                "high": stmt.excluded.high,
+                "low": stmt.excluded.low,
+                "close": stmt.excluded.close,
+                "volume": stmt.excluded.volume,
+            },
+            where=MarketCandle.timestamp >= datetime.combine(
+                today_utc,
+                datetime.min.time(),
+                tzinfo=timezone.utc
+            )
         )
 
         result = db.execute(stmt)
         db.commit()
 
-        print(f"{symbol} {timeframe} → Inserted {result.rowcount}")
+        print(f"{symbol} {timeframe} → Upserted {result.rowcount}")
 
     finally:
         db.close()
 
 
 # ----------------------------
-# MAIN
+# INCREMENTAL INGESTION
 # ----------------------------
 
-if __name__ == "__main__":
+def run_incremental_ingestion():
 
     print("Starting Daily ingestion (Nifty 500 + Indices)")
 
@@ -100,4 +123,12 @@ if __name__ == "__main__":
             TIMEFRAMES["2h"]["period"]
         )
 
-    print("Ingestion complete ✅")
+    print("Incremental ingestion complete ✅")
+
+
+# ----------------------------
+# CLI ENTRY
+# ----------------------------
+
+if __name__ == "__main__":
+    run_incremental_ingestion()

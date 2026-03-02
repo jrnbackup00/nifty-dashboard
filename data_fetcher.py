@@ -2,7 +2,7 @@ import yfinance as yf
 from universe import load_stock_universe
 
 
-def fetch_market_data(days=60):
+def fetch_market_data(days=7):
 
     symbols = load_stock_universe()
     print(f"Fetching data for {len(symbols)} symbols...")

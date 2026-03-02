@@ -4,6 +4,8 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 from database import Base
 from sqlalchemy import UniqueConstraint
+from datetime import datetime
+
 
 class User(Base):
     __tablename__ = "users"
@@ -36,3 +38,13 @@ class MarketCandle(Base):
     UniqueConstraint("symbol", "timeframe", "timestamp", name="uq_symbol_tf_ts"),
     Index("idx_symbol_timeframe_timestamp", "symbol", "timeframe", "timestamp"),
 )
+    
+
+
+class SymbolMetadata(Base):
+    __tablename__ = "symbol_metadata"
+
+    symbol = Column(String, primary_key=True, index=True)
+    sector = Column(String, nullable=True)
+    industry = Column(String, nullable=True)
+    last_updated = Column(DateTime, default=datetime.utcnow)
