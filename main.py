@@ -12,7 +12,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from metadata_service import update_symbol_metadata
 from authlib.integrations.starlette_client import OAuth
 from metadata_service import update_group_mappings
-
+from auth_db import init_db
 from breadth_engine import calculate_breadth
 from auth_db import (
     get_user,
@@ -33,6 +33,7 @@ from ingest_candles import run_incremental_ingestion
 # --------------------------
 
 app = FastAPI()
+init_db()
 templates = Jinja2Templates(directory="templates")
 
 init_db()
