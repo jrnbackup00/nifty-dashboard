@@ -10,13 +10,11 @@ from sqlalchemy import Column, Integer, String
 from sqlalchemy import Column, String
 from database import Base
 
-
 class User(Base):
     __tablename__ = "users"
 
     email = Column(String, primary_key=True)
     role = Column(String, nullable=False)
-
 
 class Permission(Base):
     __tablename__ = "permissions"
