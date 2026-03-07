@@ -15,6 +15,10 @@ class User(Base):
 
     email = Column(String, primary_key=True)
     role = Column(String, nullable=False)
+    plan_type = Column(String, default="free")
+
+
+    
 
 class Permission(Base):
     __tablename__ = "permissions"
