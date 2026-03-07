@@ -7,17 +7,32 @@ from sqlalchemy import UniqueConstraint
 from datetime import datetime
 from sqlalchemy import Column, Integer, String
 
+from sqlalchemy import Column, String
+from database import Base
 
 
 class User(Base):
     __tablename__ = "users"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    email = Column(String, unique=True, nullable=False, index=True)
-    role = Column(String, nullable=False, default="viewer")
-    plan_type = Column(String, nullable=False, default="free")
-    is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    email = Column(String, primary_key=True)
+    role = Column(String, nullable=False)
+
+
+class Permission(Base):
+    __tablename__ = "permissions"
+
+    email = Column(String, primary_key=True)
+    page = Column(String, primary_key=True)
+
+##class User(Base):
+    ##__tablename__ = "users"
+
+    ##id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    ##email = Column(String, unique=True, nullable=False, index=True)
+    ##role = Column(String, nullable=False, default="viewer")
+    ##plan_type = Column(String, nullable=False, default="free")
+    ##is_active = Column(Boolean, default=True)
+    ##created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 class MarketCandle(Base):
     __tablename__ = "market_candles"

@@ -12,31 +12,23 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from metadata_service import update_symbol_metadata
 from authlib.integrations.starlette_client import OAuth
 from metadata_service import update_group_mappings
-from auth_db import init_db
 from breadth_engine import calculate_breadth
-from auth_db import (
-    get_user,
-    get_all_users,
-    add_user,
-    update_user_role,
-    delete_user,
-    count_admins
-)
 from init_db import init_db
 from user_service import get_user_by_email
 from admin.strategy_lab_service import run_strategy_scan
 from ingest_candles import run_incremental_ingestion
-
+from database import engine, Base
+from auth_service import *
 
 # --------------------------
 # APP INIT
 # --------------------------
 
 app = FastAPI()
-init_db()
-templates = Jinja2Templates(directory="templates")
+##init_db()
 
-init_db()
+Base.metadata.create_all(bind=engine)
+templates = Jinja2Templates(directory="templates")
 
 
 # --------------------------
