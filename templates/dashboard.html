@@ -2,28 +2,17 @@
 
 {% block content %}
 
-<div class="container">
-
-    <!-- ===================== -->
-    <!-- INDEX SUMMARY CARDS -->
-    <!-- ===================== -->
-    <div class="row mb-4">
-
-    <!-- ===================== -->
-    <!-- NIFTY 50 CARD -->
-    <!-- ===================== -->
-    <div class="row mb-4">
-
-    <!-- ===================== -->
-    <!-- NIFTY 50 CARD -->
-    <!-- ===================== -->
+<!-- ===================== -->
+<!-- INDEX SUMMARY CARDS -->
+<!-- ===================== -->
+<div class="row mb-3">
+    <!-- NIFTY CARD -->
     <div class="col-md-6">
 
         <div class="card shadow-soft p-4 h-100">
 
             <div class="row">
 
-                <!-- LEFT SIDE -->
                 <div class="col-8">
                     <h6 class="text-muted">NIFTY 50</h6>
                     <h2 class="fw-bold mb-1">
@@ -36,7 +25,6 @@
                     </div>
                 </div>
 
-                <!-- RIGHT SIDE -->
                 <div class="col-4 text-end d-flex flex-column justify-content-center">
 
                     <a class="fw-semibold text-success text-decoration-none mb-2"
@@ -54,50 +42,45 @@
                     </a>
 
                 </div>
+
             </div>
 
-            <!-- NIFTY ADV LIST -->
+            <!-- NIFTY ADV -->
             <div id="niftyAdv" class="collapse mt-3">
-                <div class="card card-body border-0 bg-light">
+                <div class="card card-body bg-light border-0">
                     {% for stock in data.nifty_breadth.adv_stocks %}
-                        <div class="d-flex justify-content-between border-bottom py-1">
-                            <span>{{ stock.symbol }}</span>
-                            <span class="text-success fw-semibold">
-                                {{ stock.pct }}%
-                            </span>
-                        </div>
+                    <div class="d-flex justify-content-between border-bottom py-1">
+                        <span>{{ stock.symbol }}</span>
+                        <span class="text-success fw-semibold">{{ stock.pct }}%</span>
+                    </div>
                     {% endfor %}
                 </div>
             </div>
 
-            <!-- NIFTY DEC LIST -->
+            <!-- NIFTY DEC -->
             <div id="niftyDec" class="collapse mt-3">
-                <div class="card card-body border-0 bg-light">
+                <div class="card card-body bg-light border-0">
                     {% for stock in data.nifty_breadth.dec_stocks %}
-                        <div class="d-flex justify-content-between border-bottom py-1">
-                            <span>{{ stock.symbol }}</span>
-                            <span class="text-danger fw-semibold">
-                                {{ stock.pct }}%
-                            </span>
-                        </div>
+                    <div class="d-flex justify-content-between border-bottom py-1">
+                        <span>{{ stock.symbol }}</span>
+                        <span class="text-danger fw-semibold">{{ stock.pct }}%</span>
+                    </div>
                     {% endfor %}
                 </div>
             </div>
 
         </div>
+
     </div>
 
 
-    <!-- ===================== -->
     <!-- BANK NIFTY CARD -->
-    <!-- ===================== -->
     <div class="col-md-6">
 
         <div class="card shadow-soft p-4 h-100">
 
             <div class="row">
 
-                <!-- LEFT SIDE -->
                 <div class="col-8">
                     <h6 class="text-muted">BANK NIFTY</h6>
                     <h2 class="fw-bold mb-1">
@@ -110,7 +93,6 @@
                     </div>
                 </div>
 
-                <!-- RIGHT SIDE -->
                 <div class="col-4 text-end d-flex flex-column justify-content-center">
 
                     <a class="fw-semibold text-success text-decoration-none mb-2"
@@ -128,46 +110,67 @@
                     </a>
 
                 </div>
+
             </div>
 
-            <!-- BANK ADV LIST -->
             <div id="bankAdv" class="collapse mt-3">
-                <div class="card card-body border-0 bg-light">
+                <div class="card card-body bg-light border-0">
                     {% for stock in data.banknifty_breadth.adv_stocks %}
-                        <div class="d-flex justify-content-between border-bottom py-1">
-                            <span>{{ stock.symbol }}</span>
-                            <span class="text-success fw-semibold">
-                                {{ stock.pct }}%
-                            </span>
-                        </div>
+                    <div class="d-flex justify-content-between border-bottom py-1">
+                        <span>{{ stock.symbol }}</span>
+                        <span class="text-success fw-semibold">{{ stock.pct }}%</span>
+                    </div>
                     {% endfor %}
                 </div>
             </div>
 
-            <!-- BANK DEC LIST -->
             <div id="bankDec" class="collapse mt-3">
-                <div class="card card-body border-0 bg-light">
+                <div class="card card-body bg-light border-0">
                     {% for stock in data.banknifty_breadth.dec_stocks %}
-                        <div class="d-flex justify-content-between border-bottom py-1">
-                            <span>{{ stock.symbol }}</span>
-                            <span class="text-danger fw-semibold">
-                                {{ stock.pct }}%
-                            </span>
-                        </div>
+                    <div class="d-flex justify-content-between border-bottom py-1">
+                        <span>{{ stock.symbol }}</span>
+                        <span class="text-danger fw-semibold">{{ stock.pct }}%</span>
+                    </div>
                     {% endfor %}
                 </div>
             </div>
 
         </div>
+
+    </div>
+    <!-- LAST UPDATED -->
+    <div class="text-end text-muted small">
+        Last Data Updated: {{ data.last_updated }}
+    </div>
+    
+    <!-- ===================== -->
+    <!-- MARKET REGIME -->
+    <!-- ===================== -->
+
+    {% if data.get("market_regime") %}
+
+    <div class="row mb-4">
+
+    <div class="col-12">
+
+    <div class="card shadow-soft p-3 border-start border-4 border-{{ data.market_regime.color }}">
+
+    <h5 class="fw-bold text-{{ data.market_regime.color }} mb-1">
+    Market Regime: {{ data.market_regime.state }}
+    </h5>
+
+    <div class="text-muted small">
+    {{ data.market_regime.message }}
     </div>
 
-</div>
+    </div>
 
-<!-- LAST UPDATED -->
-<div class="text-end text-muted small mb-4">
-    Last Data Updated: {{ data.last_updated }}
-</div>
+    </div>
+    
+    </div>
 
+    {% endif %}
+</div>
 
     <!-- ===================== -->
     <!-- FILTER SECTION -->
@@ -277,6 +280,685 @@
     </div>
 
 </div>
+
+<!-- ===================== -->
+<!-- SECTOR ROTATION -->
+<!-- ===================== -->
+
+{% if data.get("sector_rotation") %}
+
+<div class="row mt-5">
+    <div class="col-12">
+        <h4 class="fw-bold mb-3">Sector Rotation</h4>
+    </div>
 </div>
 
+<div class="row">
+
+    <!-- Leading -->
+    <div class="col-md-3">
+        <div class="card shadow-soft p-3">
+            <h5 class="text-success fw-bold" style="text-decoration: underline;">Leading</h5> 
+            <small class="text-muted" style="text-decoration: underline;">Money flowing in</small>
+            <small class="text-muted">Strong momentum + strong breadth</small>
+            {% for s in data.sector_rotation.leading %}
+            <div class="d-flex justify-content-between small border-bottom py-1">
+                <span>{{ s.sector }}</span>
+                <span>{{ s.adv_pct }}%</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Weakening -->
+    <div class="col-md-3">
+        <div class="card shadow-soft p-3">
+            <h5 class="text-warning fw-bold" style="text-decoration: underline;">Weakening</h5>
+            <small class="text-muted" style="text-decoration: underline;">Profit booking started</small>
+            <small class="text-muted">Momentum slowing</small>
+     
+            {% for s in data.sector_rotation.weakening %}
+            <div class="d-flex justify-content-between small border-bottom py-1">
+                <span>{{ s.sector }}</span>
+                <span>{{ s.adv_pct }}%</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Lagging -->
+    <div class="col-md-3">
+        <div class="card shadow-soft p-3">
+            <h5 class="text-danger fw-bold" style="text-decoration: underline;">Lagging</h5>
+            <small class="text-muted" style="text-decoration: underline;">Avoid</small>
+            <small class="text-muted">Weak momentum + weak breadth</small>
+            {% for s in data.sector_rotation.lagging %}
+            <div class="d-flex justify-content-between small border-bottom py-1">
+                <span>{{ s.sector }}</span>
+                <span>{{ s.adv_pct }}%</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Improving -->
+    <div class="col-md-3">
+        <div class="card shadow-soft p-3">
+            <h5 class="text-primary fw-bold" style="text-decoration: underline;">Improving</h5>
+            <small class="text-muted" style="text-decoration: underline;">Early Opportunity</small>
+            <small class="text-muted">Recovering momentum</small>
+            {% for s in data.sector_rotation.improving %}
+            <div class="d-flex justify-content-between small border-bottom py-1">
+                <span>{{ s.sector }}</span>
+                <span>{{ s.adv_pct }}%</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+</div>
+
+{% endif %}
+
+
+<!-- ===================== -->
+<!-- SECTOR ROTATION FLOW -->
+<!-- ===================== -->
+
+{% set rotation = data.get("rotation_flow", []) %}
+
+<div class="row mt-4">
+    <div class="col-12">
+        <h4 class="fw-bold">Sector Rotation Signals</h4>
+    </div>
+</div>
+
+<div class="row">
+
+{% if rotation|length == 0 %}
+
+<div class="col-12 text-muted small">
+No sector rotation signals today.
+</div>
+
+{% else %}
+
+{% for r in rotation %}
+
+<div class="col-md-3 mb-3">
+
+<div class="card shadow-soft p-3">
+
+<div class="fw-semibold">
+{{ r.sector }}
+</div>
+
+<div class="small text-muted">
+{{ r.from|capitalize }} → {{ r.to|capitalize }}
+</div>
+
+</div>
+
+</div>
+
+{% endfor %}
+
+{% endif %}
+
+</div>
+
+<!-- ===================== -->
+<!-- EMERGING SECTORS -->
+<!-- ===================== -->
+
+{% if data.emerging_sectors and data.emerging_sectors|length > 0 %}
+
+<div class="row mt-4">
+    <div class="col-12">
+        <h4 class="fw-bold text-success">
+
+            Emerging Sector Opportunities
+            <span 
+            class="ms-2 text-muted"
+            style="cursor:pointer"
+            data-bs-toggle="modal"
+            data-bs-target="#emergingSectorInfo">
+            <span 
+            class="ms-2 text-muted"
+            style="cursor:pointer"
+            data-bs-toggle="modal"
+            data-bs-target="#emergingSectorInfo">
+            <i class="bi bi-info-circle" style="font-size:0.7rem;"></i>
+            </span>
+
+            </span>
+
+        </h4>
+    </div>
+</div>
+
+<div class="row">
+
+{% for s in data.emerging_sectors %}
+
+<div class="col-md-3 mb-3">
+
+<div class="card shadow-soft p-3">
+
+<div class="fw-semibold">
+{{ s.sector }}
+</div>
+
+<div class="small text-muted">
+Score {{ s.score }} • Momentum {{ s.momentum }}
+</div>
+
+</div>
+
+</div>
+
+{% endfor %}
+
+</div>
+
+{% endif %}
+
+<!-- ===================== -->
+<!-- ACCELERATING SECTORS -->
+<!-- ===================== -->
+
+{% if data.accelerating_sectors and data.accelerating_sectors|length > 0 %}
+
+<div class="row mt-4">
+    <div class="col-12">
+
+        <h4 class="fw-bold text-primary">
+
+        Fastest Strengthening Sectors
+        <span 
+            class="ms-2 text-muted"
+            style="cursor:pointer"
+            data-bs-toggle="modal"
+            data-bs-target="#acceleratingSectorInfo">
+
+            <span 
+            class="ms-2 text-muted"
+            style="cursor:pointer"
+            data-bs-toggle="modal"
+            data-bs-target="#acceleratingSectorInfo">
+            <i class="bi bi-info-circle" style="font-size:0.7rem;"></i>
+            </span>
+
+            </span>
+
+        </h4>
+
+    </div>
+</div>
+
+<div class="row">
+
+{% for s in data.accelerating_sectors %}
+
+<div class="col-md-3 mb-3">
+
+<div class="card shadow-soft p-3">
+
+<div class="fw-semibold">
+
+{{ s.sector }}
+
+</div>
+
+<div class="small text-muted">
+
+Score {{ s.score }} • Momentum +{{ s.momentum }}
+
+</div>
+
+</div>
+
+</div>
+
+{% endfor %}
+
+</div>
+
+{% endif %}
+
+<!-- ===================== -->
+<!-- SECTORS SECTION -->
+<!-- ===================== -->
+{% if data.get("sectors") and data.sectors|length > 0 %}
+
+<div class="row mt-5">
+    <div class="col-12">
+        <h4 class="fw-bold mb-4">
+        Sectors
+
+        <span 
+            class="ms-2 text-muted"
+            style="cursor:pointer"
+            data-bs-toggle="modal"
+            data-bs-target="#sectorScoreInfo">
+            <span 
+            class="ms-2 text-muted"
+            style="cursor:pointer"
+            data-bs-toggle="modal"
+            data-bs-target="#sectorScoreInfo">
+            <i class="bi bi-info-circle" style="font-size:0.7rem;"></i>
+            </span>
+
+        </span>
+        
+
+        </h4>
+    </div>
+</div>
+
+<div class="row">
+
+    {% for sector in data.sectors | sort(attribute='adv_pct', reverse=True) %}
+
+    <div class="col-md-4 mb-4">
+
+        <div class="card shadow-soft p-3 h-100">
+
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h6 class="fw-bold mb-0" style="color:#0b3d91;">
+                    {{ sector.sector }}
+
+                    {% if sector.strength is defined %}
+                    
+                    <small
+                    data-bs-toggle="tooltip"
+                    data-bs-placement="top"
+                    title="Sector Score = 0.7 × Breadth + 0.3 × Momentum">
+
+                    {% if sector.strength >= 70 %}
+
+                    <span class="fw-semibold" style="color:#198754;">
+                        Score {{ sector.strength }}
+                    </span>
+
+                    {% elif sector.strength >= 50 %}
+
+                    <span class="fw-semibold" style="color:#ff8c00;">
+                        Score {{ sector.strength }}
+                    </span>
+
+                    {% else %}
+
+                    <span class="fw-semibold" style="color:#dc3545;">
+                        Score {{ sector.strength }}
+                    </span>
+
+                    {% endif %}
+
+                    </small>
+                    {% endif %}
+                </h6>
+            </div>
+
+            <div class="d-flex justify-content-between">
+
+                <a class="text-success fw-semibold text-decoration-none"
+                   data-bs-toggle="collapse"
+                   href="#sectorAdv{{ loop.index }}">
+                    Adv: {{ sector.adv }}
+                    ({{ sector.adv_pct }}%)
+                </a>
+
+                <a class="text-danger fw-semibold text-decoration-none"
+                   data-bs-toggle="collapse"
+                   href="#sectorDec{{ loop.index }}">
+                    Dec: {{ sector.dec }}
+                    ({{ sector.dec_pct }}%)
+                </a>
+
+            </div>
+
+            <!-- ADV LIST -->
+            <div id="sectorAdv{{ loop.index }}" class="collapse mt-3">
+                <div class="card card-body bg-light border-0">
+                    {% for stock in sector.adv_stocks %}
+                    <div class="d-flex justify-content-between border-bottom py-1">
+                        <span>{{ stock.symbol }}</span>
+                        <span class="text-success fw-semibold">
+                            {{ stock.pct }}%
+                        </span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- DEC LIST -->
+            <div id="sectorDec{{ loop.index }}" class="collapse mt-3">
+                <div class="card card-body bg-light border-0">
+                    {% for stock in sector.dec_stocks %}
+                    <div class="d-flex justify-content-between border-bottom py-1">
+                        <span>{{ stock.symbol }}</span>
+                        <span class="text-danger fw-semibold">
+                            {{ stock.pct }}%
+                        </span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    {% endfor %}
+
+</div>
+
+{% endif %}
+</div>
+
+<script>
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    var tooltipTriggerList = [].slice.call(
+        document.querySelectorAll('[data-bs-toggle="tooltip"]')
+    )
+
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    })
+
+});
+
+</script>
+
+<!-- ===================== -->
+<!-- Sector Score Info Modal -->
+<!-- ===================== -->
+
+<div class="modal fade" id="sectorScoreInfo" tabindex="-1">
+
+<div class="modal-dialog modal-lg">
+
+<div class="modal-content">
+
+<div class="modal-header">
+
+<h5 class="modal-title">
+Sector Score Interpretation
+</h5>
+
+<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+
+</div>
+
+<div class="modal-body">
+
+<p class="small text-muted">
+
+<b>Sector Score = 0.7 × Breadth + 0.3 × Momentum</b><br><br>
+
+Breadth = % of stocks advancing in the sector today.<br>
+Momentum = consistency of recent positive participation. <br><br>
+
+Higher scores indicate stronger institutional participation
+and sector leadership.
+
+</p>
+
+<table class="table table-sm table-bordered">
+
+<thead class="table-light">
+
+<tr>
+<th>Score Range</th>
+<th>Meaning</th>
+<th>Trading Interpretation</th>
+</tr>
+
+</thead>
+
+<tbody>
+
+<tr>
+<td><b>70+</b></td>
+<td>Very Strong Sector</td>
+<td>Institutional accumulation / leadership sector</td>
+</tr>
+
+<tr>
+<td><b>60–70</b></td>
+<td>Strong Sector</td>
+<td>Trending sector with broad participation</td>
+</tr>
+
+<tr>
+<td><b>50–60</b></td>
+<td>Neutral / Rotating</td>
+<td>Market indecision, watch for breakout</td>
+</tr>
+
+<tr>
+<td><b>40–50</b></td>
+<td>Weak Sector</td>
+<td>Limited participation, avoid new longs</td>
+</tr>
+
+<tr>
+<td><b>&lt;40</b></td>
+<td>Very Weak Sector</td>
+<td>Distribution or sector underperforming</td>
+</tr>
+
+</tbody>
+
+</table>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<!-- ===================== -->
+<!-- Emerging Sector Info Modal -->
+<!-- ===================== -->
+
+<div class="modal fade" id="emergingSectorInfo" tabindex="-1">
+
+<div class="modal-dialog modal-lg">
+
+<div class="modal-content">
+
+<div class="modal-header">
+
+<h5 class="modal-title">
+Emerging Sector Opportunities
+</h5>
+
+<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+
+</div>
+
+<div class="modal-body">
+
+<p class="small text-muted">
+
+Emerging sectors are identified using the following conditions:
+
+</p>
+
+<ul class="small">
+
+<li><b>Sector Score between 50 and 70</b>  
+Sector showing improving strength but not yet a market leader.</li>
+
+<li><b>Positive Momentum</b>  
+Recent participation improving within the sector.</li>
+
+<li><b>Healthy Breadth</b>  
+At least ~40% of stocks advancing in the sector.</li>
+
+</ul>
+
+<p class="small text-muted">
+
+These sectors often represent <b>early stage sector rotation</b> where
+institutional money begins shifting before a sector becomes a clear
+market leader.
+
+</p>
+
+<table class="table table-sm table-bordered">
+
+<thead class="table-light">
+<tr>
+<th>Stage</th>
+<th>Interpretation</th>
+<th>Typical Action</th>
+</tr>
+</thead>
+
+<tbody>
+
+<tr>
+<td>Emerging</td>
+<td>Strength improving</td>
+<td>Early opportunity</td>
+</tr>
+
+<tr>
+<td>Leading</td>
+<td>Strong participation</td>
+<td>Trend continuation</td>
+</tr>
+
+<tr>
+<td>Weakening</td>
+<td>Momentum slowing</td>
+<td>Watch for rotation</td>
+</tr>
+
+<tr>
+<td>Lagging</td>
+<td>Weak participation</td>
+<td>Avoid longs</td>
+</tr>
+
+</tbody>
+
+</table>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<!-- ===================== -->
+<!-- Accelerating Sector Info Modal -->
+<!-- ===================== -->
+
+<div class="modal fade" id="acceleratingSectorInfo" tabindex="-1">
+
+<div class="modal-dialog modal-lg">
+
+<div class="modal-content">
+
+<div class="modal-header">
+
+<h5 class="modal-title">
+Fastest Strengthening Sectors
+</h5>
+
+<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+
+</div>
+
+<div class="modal-body">
+
+<p class="small text-muted">
+
+This section identifies sectors where <b>momentum and participation are increasing rapidly</b>.
+These sectors often represent <b>early institutional accumulation</b> before they become clear market leaders.
+
+</p>
+
+<p class="small text-muted">
+
+Sectors qualify as <b>Fastest Strengthening</b> when:
+
+</p>
+
+<ul class="small">
+
+<li><b>Momentum ≥ 10</b><br>
+Sector participation improving rapidly.</li>
+
+<li><b>Sector Score ≥ 50</b><br>
+Sector already showing reasonable strength.</li>
+
+<li><b>High momentum relative to other sectors</b><br>
+Top sectors sorted by momentum acceleration.</li>
+
+</ul>
+
+<table class="table table-sm table-bordered">
+
+<thead class="table-light">
+<tr>
+<th>Signal</th>
+<th>Interpretation</th>
+<th>Typical Market Behaviour</th>
+</tr>
+</thead>
+
+<tbody>
+
+<tr>
+<td>Fastest Strengthening</td>
+<td>Momentum expanding rapidly</td>
+<td>Sector may soon become a leader</td>
+</tr>
+
+<tr>
+<td>Emerging</td>
+<td>Strength improving gradually</td>
+<td>Early stage sector rotation</td>
+</tr>
+
+<tr>
+<td>Leading</td>
+<td>Strong participation</td>
+<td>Established sector trend</td>
+</tr>
+
+<tr>
+<td>Weakening</td>
+<td>Momentum fading</td>
+<td>Possible profit booking</td>
+</tr>
+
+</tbody>
+
+</table>
+
+<p class="small text-muted">
+
+These signals help identify <b>where institutional capital may be rotating next</b>.
+
+</p>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
 {% endblock %}

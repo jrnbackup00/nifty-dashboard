@@ -5,6 +5,8 @@ from sqlalchemy.sql import func
 from database import Base
 from sqlalchemy import UniqueConstraint
 from datetime import datetime
+from sqlalchemy import Column, Integer, String
+
 
 
 class User(Base):
@@ -48,3 +50,17 @@ class SymbolMetadata(Base):
     sector = Column(String, nullable=True)
     industry = Column(String, nullable=True)
     last_updated = Column(DateTime, default=datetime.utcnow)
+
+
+class SymbolGroupMap(Base):
+
+    __tablename__ = "symbol_group_map"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    symbol = Column(String, index=True)
+
+    group_name = Column(String, index=True)
+
+    group_type = Column(String, index=True)
+

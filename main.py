@@ -11,6 +11,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 from metadata_service import update_symbol_metadata
 from authlib.integrations.starlette_client import OAuth
+from metadata_service import update_group_mappings
 
 from breadth_engine import calculate_breadth
 from auth_db import (
@@ -211,8 +212,7 @@ def dashboard(
     ema5: str | None = Query(default=None),
     ema20: str | None = Query(default=None),
 ):
-    import os
-    print("DASHBOARD ROUTE PID:", os.getpid())
+
     data = calculate_breadth(ema5_filter=ema5, ema20_filter=ema20)
 
     return templates.TemplateResponse(
@@ -279,6 +279,9 @@ def admin_update_role(
 
     if csrf_token != request.session.get("csrf_token"):
         return HTMLResponse("Invalid CSRF Token", status_code=403)
+    
+    if role == "select":
+        return HTMLResponse("Please select a valid role", status_code=400)
 
     if email == user.get("email") and role != "admin":
         return HTMLResponse("You cannot downgrade yourself", status_code=400)
@@ -386,6 +389,18 @@ def run_metadata_update(request: Request):
         return HTMLResponse("Access Denied", status_code=403)
 
     update_symbol_metadata()
+
+    return RedirectResponse("/admin", status_code=302)
+
+@app.post("/admin/update-group-mapping")
+def run_group_update(request: Request):
+
+    user = request.session.get("user")
+
+    if not user or user.get("role") != "admin":
+        return HTMLResponse("Access Denied", status_code=403)
+
+    update_group_mappings()
 
     return RedirectResponse("/admin", status_code=302)
 
