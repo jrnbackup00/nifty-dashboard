@@ -1,10 +1,12 @@
 import yfinance as yf
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from sqlalchemy.dialects.postgresql import insert
 from database import SessionLocal
 from models import MarketCandle
 from universe import load_stock_universe
-
+from database import SessionLocal
+from ingestion_logs import log_ingestion
+from market_calendar import is_market_day
 
 # ----------------------------
 # CONFIG
@@ -132,3 +134,133 @@ def run_incremental_ingestion():
 
 if __name__ == "__main__":
     run_incremental_ingestion()
+
+# -----------------------------------
+# Scheduler Job — Intraday 2H Ingestion
+# -----------------------------------
+# -----------------------------------
+# Helper Functions for Scheduler
+# -----------------------------------
+
+def ingest_2h_candles():
+
+    count = 0
+
+    for symbol in INTRADAY_SYMBOLS:
+        save_candles(
+            symbol,
+            "2h",
+            TIMEFRAMES["2h"]["interval"],
+            TIMEFRAMES["2h"]["period"]
+        )
+        count += 1
+
+    return count
+
+
+def ingest_daily_candles():
+
+    count = 0
+
+    for symbol in DAILY_SYMBOLS:
+        save_candles(
+            symbol,
+            "1d",
+            TIMEFRAMES["1d"]["interval"],
+            TIMEFRAMES["1d"]["period"]
+        )
+        count += 1
+
+    return count
+
+
+def reingest_day(target_date):
+
+    print(f"Repairing candles for {target_date}")
+
+    ingest_daily_candles()
+    ingest_2h_candles()
+
+
+# -----------------------------------
+# Scheduler Job — Intraday 2H Ingestion
+# -----------------------------------
+
+def run_intraday_ingestion():
+
+    if not is_market_day():
+        print("Skipping ingestion — market closed")
+        return
+
+    try:
+
+        rows = ingest_2h_candles()
+
+        log_ingestion(
+            job_type="intraday_2h",
+            status="SUCCESS",
+            rows=rows
+        )
+
+        print("Intraday ingestion complete")
+
+    except Exception as e:
+
+        log_ingestion(
+            job_type="intraday_2h",
+            status="FAILED",
+            rows=0,
+            error=str(e)
+        )
+
+        print("Intraday ingestion failed:", e)
+
+
+# -----------------------------------
+# Scheduler Job — Market Close Cycle
+# -----------------------------------
+
+def run_market_close_ingestion():
+
+    if not is_market_day():
+        print("Skipping close ingestion — market closed")
+        return
+
+    try:
+
+        rows_2h = ingest_2h_candles()
+        rows_1d = ingest_daily_candles()
+
+        repair_last_days(3)
+
+        log_ingestion(
+            job_type="market_close",
+            status="SUCCESS",
+            rows=rows_2h + rows_1d
+        )
+
+        print("Market close ingestion complete")
+
+    except Exception as e:
+
+        log_ingestion(
+            job_type="market_close",
+            status="FAILED",
+            rows=0,
+            error=str(e)
+        )
+
+        print("Market close ingestion failed:", e)
+
+
+# -----------------------------------
+# Repair last N days
+# -----------------------------------
+
+def repair_last_days(days):
+
+    for i in range(days + 1):
+
+        target_date = datetime.now(timezone.utc).date() - timedelta(days=i)
+
+        reingest_day(target_date)

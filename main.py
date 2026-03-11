@@ -19,6 +19,7 @@ from admin.strategy_lab_service import run_strategy_scan
 from ingest_candles import run_incremental_ingestion
 from database import engine, Base
 from auth_service import *
+from scheduler import start_scheduler
 
 # --------------------------
 # APP INIT
@@ -26,6 +27,8 @@ from auth_service import *
 
 app = FastAPI()
 ##init_db()
+
+start_scheduler()
 
 Base.metadata.create_all(bind=engine)
 templates = Jinja2Templates(directory="templates")
@@ -279,7 +282,7 @@ def admin_update_role(
     if email == user.get("email") and role != "admin":
         return HTMLResponse("You cannot downgrade yourself", status_code=400)
 
-    target = get_user(email)
+    target = get_user_by_email(email)
     if target and target["role"] == "admin" and role != "admin":
         if count_admins() <= 1:
             return HTMLResponse("Cannot remove last admin", status_code=400)
@@ -302,7 +305,7 @@ def admin_delete_user(
     if email == user.get("email"):
         return HTMLResponse("Cannot delete yourself", status_code=400)
 
-    target = get_user(email)
+    target = get_user_by_email(email)
     if target and target["role"] == "admin":
         if count_admins() <= 1:
             return HTMLResponse("Cannot delete last admin", status_code=400)

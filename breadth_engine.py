@@ -4,6 +4,7 @@ import pandas as pd
 from database import SessionLocal
 from models import MarketCandle, SymbolGroupMap
 from universe import load_nifty50_universe, load_banknifty_universe
+from zoneinfo import ZoneInfo
 
 ROTATION_HISTORY = None
 
@@ -579,7 +580,8 @@ def calculate_breadth(ema5_filter=None, ema20_filter=None):
         "dec_stocks": sorted(bank_dec, key=lambda x: x["pct"])
     }
 
-    final["last_updated"] = latest_timestamp.strftime("%d %b %Y %H:%M")
+    ist_time = latest_timestamp.astimezone(ZoneInfo("Asia/Kolkata"))
+    final["last_updated"] = ist_time.strftime("%d - %b - %Y %-I%p IST")
 
     CACHE[cache_key] = (time.time(), final)
 
