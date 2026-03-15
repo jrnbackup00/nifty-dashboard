@@ -26,7 +26,7 @@
     <!-- FILTER CARD -->
     <div class="card shadow-sm p-3 mb-4">
 
-<form method="post" action="/admin/strategy-lab">
+<form method="post" action="/admin/strategy-lab" onsubmit="return validateScannerForm()">
 
 <div class="d-flex flex-wrap align-items-center gap-3">
 
@@ -34,6 +34,11 @@
 <div style="min-width:240px">
 <label class="form-label small mb-1">Strategy</label>
 <select name="strategy_type" class="form-select">
+
+<option value="">
+Select Strategy
+</option>
+
 <option value="cross_above"
 {% if selected_strategy == "cross_above" %}selected{% endif %}>
 ECP1A
@@ -43,24 +48,29 @@ ECP1A
 {% if selected_strategy == "cross_below" %}selected{% endif %}>
 ECP1D
 </option>
+
 </select>
 </div>
-
 
 <!-- Timeframe -->
 <div style="min-width:160px">
 <label class="form-label small mb-1">Timeframe</label>
 <select name="timeframe" class="form-select">
 
-<option value="daily"
-{% if selected_timeframe == "daily" %}selected{% endif %}>
-Daily
+<option value="">
+Select Timeframe
 </option>
 
 <option value="2h"
 {% if selected_timeframe == "2h" %}selected{% endif %}>
 2 Hour
 </option>
+
+<option value="daily"
+{% if selected_timeframe == "daily" %}selected{% endif %}>
+Daily
+</option>
+
 
 <option value="weekly"
 {% if selected_timeframe == "weekly" %}selected{% endif %}>
@@ -81,24 +91,24 @@ Monthly
 <label class="form-label small mb-1">Lookback</label>
 <select name="lookback" class="form-select">
 
-<option value="1"
-{% if selected_lookback == 1 %}selected{% endif %}>
+<option value="1" {% if selected_lookback == 1 %}selected{% endif %}>
 1 Candle
 </option>
 
-<option value="3"
-{% if selected_lookback == 3 %}selected{% endif %}>
+<option value="2" {% if selected_lookback == 2 %}selected{% endif %}>
+2 Candles
+</option>
+
+<option value="3" {% if selected_lookback == 3 %}selected{% endif %}>
 3 Candles
 </option>
 
-<option value="5"
-{% if selected_lookback == 5 %}selected{% endif %}>
-5 Candles
+<option value="4" {% if selected_lookback == 4 %}selected{% endif %}>
+4 Candles
 </option>
 
-<option value="10"
-{% if selected_lookback == 10 %}selected{% endif %}>
-10 Candles
+<option value="5" {% if selected_lookback == 5 %}selected{% endif %}>
+5 Candles
 </option>
 
 </select>
@@ -217,4 +227,25 @@ Run Scan
 
 </div>
 
+<script>
+
+function validateScannerForm() {
+
+    const strategy = document.querySelector("select[name='strategy_type']").value;
+    const timeframe = document.querySelector("select[name='timeframe']").value;
+
+    if (!strategy) {
+        alert("Please select a Strategy.");
+        return false;
+    }
+
+    if (!timeframe) {
+        alert("Please select a Timeframe.");
+        return false;
+    }
+
+    return true;
+}
+
+</script>
 {% endblock %}

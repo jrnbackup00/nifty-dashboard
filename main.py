@@ -348,12 +348,13 @@ def strategy_lab_page(request: Request, user=Depends(require_admin)):
 @app.post("/admin/strategy-lab", response_class=HTMLResponse)
 def strategy_lab_scan(
     request: Request,
-    strategy_type: str = Form(...),
-    timeframe: str = Form(...),
+    strategy_type: str | None = Form(None),
+    timeframe: str | None = Form(None),
     lookback: int = Form(...),
     include_live: str | None = Form(None),
     user=Depends(require_admin)
 ):
+    
     use_live_candle = include_live == "true"
     data = calculate_breadth()
 
