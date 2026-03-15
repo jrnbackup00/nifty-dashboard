@@ -77,7 +77,8 @@ Load NSE sectors & themes from CSV
 
 <form method="post" action="/admin/run-ingestion">
 
-<button class="btn btn-dark w-100">
+<button class="btn btn-primary w-100"
+onclick="return confirmIngestion(this);">
 Run Data Ingestion
 </button>
 
@@ -87,7 +88,33 @@ Run Data Ingestion
 Fetch latest candle data
 </small>
 
+<div class="col-md-6">
+
+<form method="post" action="/admin/repair-ingestion">
+
+<input type="number"
+       name="days"
+       class="form-control mb-2"
+       placeholder="Repair last N days"
+       min="1"
+       max="30"
+       required>
+
+<button class="btn btn-warning w-100"
+onclick="return confirmRepair(this.form);">
+Repair Historical Data
+</button>
+
+</form>
+
+<small class="text-muted">
+Rebuild candles for last N days
+</small>
+
 </div>
+</div>
+
+
 
 </div>
 </div>
@@ -227,6 +254,33 @@ function validateRoleSelection(form) {
 
     if (role === "select") {
         alert("Please select a role before updating.");
+        return false;
+    }
+
+    return true;
+}
+
+</script>
+
+<script>
+
+function confirmIngestion(button) {
+
+    if (!confirm("Run data ingestion now?")) {
+        return false;
+    }
+
+    button.innerText = "Running...";
+    button.disabled = true;
+
+    return true;
+}
+
+function confirmRepair(form) {
+
+    const days = form.days.value;
+
+    if (!confirm(`Repair last ${days} days of market data?`)) {
         return false;
     }
 

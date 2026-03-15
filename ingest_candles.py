@@ -7,6 +7,10 @@ from universe import load_stock_universe
 from database import SessionLocal
 from ingestion_logs import log_ingestion
 from market_calendar import is_market_day
+from telegram_alert import send_telegram_alert
+import pytz
+from zoneinfo import ZoneInfo
+from telegram_alert import send_telegram_alert
 
 # ----------------------------
 # CONFIG
@@ -206,15 +210,24 @@ def run_intraday_ingestion():
 
     except Exception as e:
 
+        message = f"""
+        Nifty Dashboard Alert
+
+        Job: Intraday 2H Ingestion
+        Status: FAILED
+        Error: {str(e)}
+        """
+
+        send_telegram_alert(message)
+
         log_ingestion(
-            job_type="intraday_2h",
-            status="FAILED",
-            rows=0,
-            error=str(e)
+        job_type="intraday_2h",
+        status="FAILED",
+        rows=0,
+        error=str(e)
         )
 
         print("Intraday ingestion failed:", e)
-
 
 # -----------------------------------
 # Scheduler Job — Market Close Cycle
@@ -233,15 +246,89 @@ def run_market_close_ingestion():
 
         repair_last_days(3)
 
+        total_rows = rows_2h + rows_1d
+
+        # -----------------------------
+        # Detect silent ingestion failure
+        # -----------------------------
+
+        if total_rows == 0:
+
+            ist_now = datetime.now(timezone.utc).astimezone(
+                    ZoneInfo("Asia/Kolkata")
+            )
+
+        warning_msg = f"""
+        Nifty Dashboard Warning
+
+        Job: Market Close Ingestion
+        Status: COMPLETED but NO DATA
+
+        Rows Updated: 0
+
+        Time: {ist_now.strftime("%d %b %Y %I:%M %p IST")}
+
+        Possible causes:
+        • Yahoo API returned empty data
+        • Network issue
+        • Market holiday mismatch
+        """
+
+        send_telegram_alert(warning_msg)
+
         log_ingestion(
             job_type="market_close",
             status="SUCCESS",
-            rows=rows_2h + rows_1d
+            rows=total_rows
         )
+
+        # -----------------------------
+        # Telegram SUCCESS Alert
+        # -----------------------------
+
+        ist_now = datetime.now(timezone.utc).astimezone(
+            ZoneInfo("Asia/Kolkata")
+        )
+
+        message = f"""
+            ✅ Nifty Dashboard
+
+            Job: Market Close Ingestion
+            Status: SUCCESS
+            Rows Updated: {total_rows}
+
+            Time: {ist_now.strftime("%d %b %Y %I:%M %p IST")}
+            """
+
+        send_telegram_alert(message)
 
         print("Market close ingestion complete")
 
+
+
     except Exception as e:
+
+        # -----------------------------
+        # Telegram FAILURE Alert
+        # -----------------------------
+
+        ist_now = datetime.now(timezone.utc).astimezone(
+            ZoneInfo("Asia/Kolkata")
+        )
+
+        message = f"""
+            Nifty Dashboard Alert
+
+            Job: Market Close Ingestion
+            Status: FAILED
+
+            Time: {ist_now.strftime("%d %b %Y %I:%M %p IST")}
+
+            Error:
+            {str(e)}
+            """
+
+        send_telegram_alert(message)
 
         log_ingestion(
             job_type="market_close",
@@ -251,7 +338,6 @@ def run_market_close_ingestion():
         )
 
         print("Market close ingestion failed:", e)
-
 
 # -----------------------------------
 # Repair last N days
