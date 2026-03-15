@@ -20,6 +20,7 @@ from ingest_candles import run_incremental_ingestion
 from database import engine, Base
 from auth_service import *
 from scheduler import start_scheduler
+from ingest_candles import repair_last_days
 
 # --------------------------
 # APP INIT
@@ -107,14 +108,16 @@ class AuthMiddleware(BaseHTTPMiddleware):
             return RedirectResponse("/login")
 
         role = user.get("role")
-        allowed_routes = PERMISSIONS.get(role, [])
 
-        if "*" in allowed_routes:
+        # Admin can access everything
+        if role == "admin":
             return await call_next(request)
+
+        allowed_routes = PERMISSIONS.get(role, [])
 
         if request.url.path not in allowed_routes:
             return HTMLResponse("Permission Denied", status_code=403)
-
+        
         return await call_next(request)
 
 
@@ -314,6 +317,7 @@ def admin_delete_user(
     return RedirectResponse("/admin", status_code=302)
 
 
+
 # --------------------------
 # STRATEGY LAB (ADMIN)
 # --------------------------
@@ -370,7 +374,16 @@ def run_ingestion(user=Depends(require_admin)):
     run_incremental_ingestion()
     return RedirectResponse("/admin/strategy-lab", status_code=302)
 
+# --------------------------
+# ADMIN - REPAIR DATA
+# --------------------------
 
+@app.post("/admin/repair-ingestion")
+def repair_ingestion(days: int = Form(...), user=Depends(require_admin)):
+
+    repair_last_days(days)
+
+    return RedirectResponse("/admin/strategy-lab", status_code=302)
 
 # --------------------------
 # Update Metadata
