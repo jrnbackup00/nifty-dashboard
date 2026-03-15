@@ -5,6 +5,8 @@ from database import SessionLocal
 from models import MarketCandle, SymbolGroupMap
 from universe import load_nifty50_universe, load_banknifty_universe
 from zoneinfo import ZoneInfo
+from ingestion_logs import get_last_successful_ingestion
+
 
 ROTATION_HISTORY = None
 
@@ -580,9 +582,21 @@ def calculate_breadth(ema5_filter=None, ema20_filter=None):
         "dec_stocks": sorted(bank_dec, key=lambda x: x["pct"])
     }
 
-    ist_time = latest_timestamp.astimezone(ZoneInfo("Asia/Kolkata"))
-    final["last_updated"] = ist_time.strftime("%d - %b - %Y %-I%p IST")
+    last_ingestion = get_last_successful_ingestion()
 
+    if last_ingestion:
+
+        # database stores UTC
+        utc_time = last_ingestion.replace(tzinfo=ZoneInfo("UTC"))
+
+        # convert to IST
+        ist_time = utc_time.astimezone(ZoneInfo("Asia/Kolkata"))
+
+        final["last_updated"] = ist_time.strftime("%d %b %Y %I:%M %p IST")
+
+    else:
+        final["last_updated"] = "Unknown"
+    
     CACHE[cache_key] = (time.time(), final)
 
     return final

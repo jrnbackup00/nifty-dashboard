@@ -73,7 +73,7 @@ def resample_timeframe(df, timeframe):
 # -----------------------------
 # MAIN SCANNER
 # -----------------------------
-def run_strategy_scan(strategy_type, timeframe, lookback):
+def run_strategy_scan(strategy_type, timeframe, lookback, use_live_candle=False):
 
     db = SessionLocal()
 
@@ -118,6 +118,20 @@ def run_strategy_scan(strategy_type, timeframe, lookback):
         g = g.sort_values("timestamp")
         g.set_index("timestamp", inplace=True)
 
+        # ---------------------------------------
+        # FIX: Remove duplicate daily candles
+        # Yahoo sometimes returns 2 timestamps
+        # (00:00 and 18:30) for the same day
+        # ---------------------------------------
+        """if timeframe == "daily":
+            g["date"] = g.index.date
+            g = g.groupby("date").last()
+            g.index = pd.to_datetime(g.index)"""
+
+        if timeframe == "daily":
+        # Remove duplicate daily candles (Yahoo timezone issue)
+            g = g[~g.index.normalize().duplicated(keep="last")]
+
         if timeframe in ["weekly", "monthly"]:
             g = resample_timeframe(g, timeframe)
 
@@ -137,7 +151,9 @@ def run_strategy_scan(strategy_type, timeframe, lookback):
         g["EMA80"] = g["Close"].ewm(span=80, adjust=False).mean()
         g["EMA200"] = g["Close"].ewm(span=200, adjust=False).mean()
 
-        # Detect Cross
+        
+       # Detect Crossovers
+    
         g["cross_up"] = (
             (g["EMA5"] > g["EMA20"]) &
             (g["EMA5"].shift(1) <= g["EMA20"].shift(1))
@@ -148,19 +164,30 @@ def run_strategy_scan(strategy_type, timeframe, lookback):
             (g["EMA5"].shift(1) >= g["EMA20"].shift(1))
         )
 
-        # Find last cross index within lookback
-        recent = g.tail(lookback)
+        
+
+        # Determine candle set based on mode
+        if use_live_candle:
+            g_closed = g
+        else:
+            g_closed = g.iloc[:-1]
 
         if strategy_type == "cross_above":
-            match = recent[recent["cross_up"] == True]
+            cross_points = g_closed.index[g_closed["cross_up"]]
         else:
-            match = recent[recent["cross_down"] == True]
+            cross_points = g_closed.index[g_closed["cross_down"]]
 
-        if match.empty:
+        # No cross ever happened
+        if len(cross_points) == 0:
             continue
 
-        last_cross_index = match.index[-1]
-        bars_since_cross = len(g) - g.index.get_loc(last_cross_index) - 1
+        last_cross_index = cross_points[-1]
+
+        bars_since_cross = len(g_closed) - g_closed.index.get_loc(last_cross_index) - 1
+
+        # Apply lookback filter
+        if bars_since_cross > lookback:
+            continue
 
         # Supertrend
         g = compute_supertrend(g)

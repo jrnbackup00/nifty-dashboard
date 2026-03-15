@@ -3,11 +3,16 @@ import os
 from datetime import datetime
 import pytz
 
-BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
-CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
+import os
+import requests
 
 
 def send_telegram_alert(message):
+
+    BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+    CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
+
+    
 
     if not BOT_TOKEN or not CHAT_ID:
         print("Telegram not configured")
@@ -17,11 +22,9 @@ def send_telegram_alert(message):
 
     payload = {
         "chat_id": CHAT_ID,
-        "text": message,
-        "parse_mode": "HTML"
+        "text": message
     }
 
-    try:
-        requests.post(url, json=payload, timeout=10)
-    except Exception as e:
-        print("Telegram alert failed:", e)
+    response = requests.post(url, json=payload)
+
+    print("Telegram response:", response.text)

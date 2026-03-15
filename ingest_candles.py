@@ -345,8 +345,32 @@ def run_market_close_ingestion():
 
 def repair_last_days(days):
 
+    repaired = 0
+
     for i in range(days + 1):
 
         target_date = datetime.now(timezone.utc).date() - timedelta(days=i)
 
+        print(f"Repairing candles for {target_date}")
+
         reingest_day(target_date)
+
+        repaired += 1
+
+    # -----------------------------
+    # Notify admin when repair finishes
+    # -----------------------------
+
+    ist_now = datetime.now(timezone.utc).astimezone(
+        ZoneInfo("Asia/Kolkata")
+    )
+
+    message = f"""
+    Nifty Dashboard Repair Completed
+
+    Days Repaired: {repaired}
+
+    Time: {ist_now.strftime("%d %b %Y %I:%M %p IST")}
+    """
+
+    send_telegram_alert(message)

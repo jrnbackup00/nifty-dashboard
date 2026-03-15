@@ -1,14 +1,16 @@
 import uuid
-from sqlalchemy import Column, String, DateTime, Float, BigInteger, Index, Boolean
+from sqlalchemy import Column, String, DateTime, Float, BigInteger, Index, Boolean, Integer, Text 
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 from database import Base
 from sqlalchemy import UniqueConstraint
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy import Column, Integer, String
 
 from sqlalchemy import Column, String
 from database import Base
+
+
 
 class User(Base):
     __tablename__ = "users"
@@ -81,3 +83,19 @@ class SymbolGroupMap(Base):
 
     group_type = Column(String, index=True)
 
+
+class IngestionLog(Base):
+
+    __tablename__ = "ingestion_logs"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    run_time = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+    job_type = Column(String)
+
+    status = Column(String)
+
+    rows_ingested = Column(Integer)
+
+    errors = Column(Text)

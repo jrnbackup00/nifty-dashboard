@@ -21,6 +21,11 @@ from database import engine, Base
 from auth_service import *
 from scheduler import start_scheduler
 from ingest_candles import repair_last_days
+from fastapi import BackgroundTasks
+from telegram_alert import send_telegram_alert
+from zoneinfo import ZoneInfo
+from ingestion_logs import get_last_successful_ingestion
+from datetime import datetime
 
 # --------------------------
 # APP INIT
@@ -325,14 +330,17 @@ def admin_delete_user(
 @app.get("/admin/strategy-lab", response_class=HTMLResponse)
 def strategy_lab_page(request: Request, user=Depends(require_admin)):
 
+    data = calculate_breadth()
     return templates.TemplateResponse(
         "strategy_lab.html",
         {
             "request": request,
+            "data": data,
             "results": None,
             "selected_strategy": None,
             "selected_timeframe": None,
-            "selected_lookback": None
+            "selected_lookback": None,
+            "include_live": False
         }
     )
 
@@ -343,23 +351,29 @@ def strategy_lab_scan(
     strategy_type: str = Form(...),
     timeframe: str = Form(...),
     lookback: int = Form(...),
+    include_live: str | None = Form(None),
     user=Depends(require_admin)
 ):
+    use_live_candle = include_live == "true"
+    data = calculate_breadth()
 
     results = run_strategy_scan(
         strategy_type=strategy_type,
         timeframe=timeframe,
-        lookback=int(lookback)
+        lookback=int(lookback),
+        use_live_candle=use_live_candle
     )
 
     return templates.TemplateResponse(
         "strategy_lab.html",
         {
             "request": request,
+            "data": data,
             "results": results,
             "selected_strategy": strategy_type,
             "selected_timeframe": timeframe,
-            "selected_lookback": lookback
+            "selected_lookback": lookback,
+            "include_live": use_live_candle
         }
     )
 
@@ -379,11 +393,34 @@ def run_ingestion(user=Depends(require_admin)):
 # --------------------------
 
 @app.post("/admin/repair-ingestion")
-def repair_ingestion(days: int = Form(...), user=Depends(require_admin)):
+def repair_ingestion(
+    background_tasks: BackgroundTasks,
+    days: int = Form(...),
+    request: Request = None,
+    user=Depends(require_admin)
+):
 
-    repair_last_days(days)
+    email = request.session.get("user", {}).get("email")
 
-    return RedirectResponse("/admin/strategy-lab", status_code=302)
+    # Current IST time
+    ist_now = datetime.now(ZoneInfo("Asia/Kolkata"))
+
+    start_msg = f"""
+        Admin Repair Triggered
+
+        Days: {days}
+        User: {email}
+
+        Time: {ist_now.strftime("%d %b %Y %I:%M %p IST")}
+        """
+
+    # Send telegram in background
+    background_tasks.add_task(send_telegram_alert, start_msg)
+
+    # Run repair job in background
+    background_tasks.add_task(repair_last_days, days)
+
+    return RedirectResponse("/admin", status_code=302)
 
 # --------------------------
 # Update Metadata
