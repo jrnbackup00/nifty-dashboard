@@ -407,7 +407,7 @@ def run_market_close_ingestion():
         rows_2h = ingest_2h_candles()
         rows_1d = ingest_daily_candles()
 
-        repair_last_days(3)
+        repair_last_days(1)
 
         total_rows = rows_2h + rows_1d
 
@@ -539,7 +539,7 @@ def repair_last_days(days):
     send_telegram_alert(message)
 
 # -----------------------------
-# Temp 2H repair for last 60 days
+# Temp 2H repair for last 7 days
 # -----------------------------
 def repair_intraday_days(days):
 

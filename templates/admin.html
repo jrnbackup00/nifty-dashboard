@@ -88,9 +88,9 @@ Run Data Ingestion
 Fetch latest candle data
 </small>
 
-<div class="col-md-6">
+<!--<div class="col-md-6">
 
-<form method="post" action="/admin/repair-ingestion">
+ <form method="post" action="/admin/repair-ingestion">
 
 <input type="number"
        name="days"
@@ -110,8 +110,25 @@ Repair Historical Data
 <small class="text-muted">
 Rebuild candles for last N days
 </small>
-
 </div>
+ -->
+
+<div>
+<form method="post" action="/admin/repair-intraday">
+    
+    <button class="btn btn-outline-dark"
+            onclick="return confirmIntradayRepair(this.form);">
+        2H Candle repair
+    </button>
+    
+</form>
+
+<small class="text-muted">
+    Rebuild candles for last 7 days
+</small>
+</div>
+
+
 </div>
 
 
@@ -287,6 +304,12 @@ function confirmRepair(form) {
     return true;
 }
 
+</script>
+
+<script>
+function confirmIntradayRepair(form) {
+    return confirm("Repair 2H candles?\n\nThis will rebuild recent 7 days intraday data.\nThis action may take a few minutes.");
+}
 </script>
 </tbody>
 
