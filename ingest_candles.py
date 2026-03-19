@@ -9,8 +9,11 @@ from ingestion_logs import log_ingestion
 from market_calendar import is_market_day
 from telegram_alert import send_telegram_alert
 import pytz
+import pandas as pd
 from zoneinfo import ZoneInfo
 from telegram_alert import send_telegram_alert
+from datetime import time, datetime
+
 
 # ----------------------------
 # CONFIG
@@ -28,6 +31,124 @@ TIMEFRAMES = {
 }
 
 
+
+
+""" def build_2h_candles(df):
+
+    if df.empty:
+        return []
+
+    df = df.copy()
+    df.index = df.index.tz_convert("Asia/Kolkata")
+
+    df = df.between_time("09:15", "15:30")
+    df["date"] = df.index.date
+
+    candles = []
+
+    for date, g in df.groupby("date"):
+
+        g = g.sort_index()
+
+        # -------------------------
+        # NSE FIXED WINDOWS
+        # -------------------------
+        windows = [
+            (time(9,15), time(11,15), "2h"),
+            (time(11,15), time(13,15), "2h"),
+            (time(13,15), time(15,15), "2h"),
+            (time(15,15), time(15,30), "15m"),
+        ]
+
+        for start, end, tf in windows:
+
+            chunk = g[
+                (g.index.time >= start) &
+                (g.index.time <= end)
+            ]
+
+            # Need at least 2 datapoints to form candle
+            if len(chunk) < 2:
+                continue
+
+            ts = datetime.combine(date, end)
+            ts = ts.replace(tzinfo=ZoneInfo("Asia/Kolkata")).astimezone(ZoneInfo("UTC"))
+
+            candles.append({
+                "timeframe": tf,
+                "timestamp": ts,
+                "open": chunk.iloc[0]["Open"],
+                "high": chunk["High"].max(),
+                "low": chunk["Low"].min(),
+                "close": chunk.iloc[-1]["Close"],
+                "volume": chunk["Volume"].sum(),
+            })
+
+    return candles
+ """
+
+
+def build_2h_candles(df):
+
+    if df.empty:
+        return []
+
+    df = df.copy()
+    df.index = df.index.tz_convert("Asia/Kolkata")
+
+    # Keep only NSE trading hours
+    df = df.between_time("09:15", "15:30")
+    df["date"] = df.index.date
+
+    candles = []
+
+    for date, g in df.groupby("date"):
+
+        g = g.sort_index()
+
+        # -------------------------
+        # NSE FIXED WINDOWS
+        # -------------------------
+        windows = [
+            (time(9,15),  time(11,15)),
+            (time(11,15), time(13,15)),
+            (time(13,15), time(15,15)),
+            (time(15,15), time(15,30)),  # 🔥 include as 2H continuation
+        ]
+
+        for start, end in windows:
+
+            # ✅ Strict boundary: [start, end)
+            if end == time(15,30):
+                # last candle inclusive
+                chunk = g[
+                    (g.index.time >= start) &
+                    (g.index.time <= end)
+                ]
+            else:
+                chunk = g[
+                    (g.index.time >= start) &
+                    (g.index.time < end)
+                ]
+
+            if chunk.empty:
+                continue
+
+            ts = datetime.combine(date, end)
+            ts = ts.replace(tzinfo=ZoneInfo("Asia/Kolkata")).astimezone(ZoneInfo("UTC"))
+
+            candles.append({
+                "timeframe": "2h",   # ✅ ALWAYS 2h
+                "timestamp": ts,
+                "open": float(chunk.iloc[0]["Open"]),
+                "high": float(chunk["High"].max()),
+                "low": float(chunk["Low"].min()),
+                "close": float(chunk.iloc[-1]["Close"]),
+                "volume": int(chunk["Volume"].sum()),
+            })
+
+    return candles
+
 # ----------------------------
 # CORE SAVE FUNCTION
 # ----------------------------
@@ -35,11 +156,11 @@ TIMEFRAMES = {
 def save_candles(symbol, timeframe, interval, period):
 
     df = yf.download(
-        symbol,
-        interval=interval,
-        period=period,
-        auto_adjust=False,
-        threads=True
+    symbol,
+    interval=interval,
+    period=period,
+    auto_adjust=True,   
+    threads=True        
     )
 
     if df.empty:
@@ -49,35 +170,78 @@ def save_candles(symbol, timeframe, interval, period):
     if hasattr(df.columns, "levels"):
         df.columns = df.columns.get_level_values(0)
 
+    # -----------------------------------
+    # STEP 1: Remove duplicate timestamps from Yahoo
+    # -----------------------------------
+    df = df.sort_index()
+    df = df[~df.index.duplicated(keep="last")]
+
     db = SessionLocal()
 
     try:
         today_utc = datetime.now(timezone.utc).date()
 
-        records = []
+        # -----------------------------------
+        # STEP 2: BUILD RECORDS SAFELY
+        # -----------------------------------
 
-        for timestamp, row in df.iterrows():
-            ts = timestamp.to_pydatetime().astimezone(timezone.utc)
+        records_map = {}
 
-            record = {
-                "symbol": symbol,
-                "timeframe": timeframe,
-                "timestamp": ts,
-                "open": float(row["Open"]),
-                "high": float(row["High"]),
-                "low": float(row["Low"]),
-                "close": float(row["Close"]),
-                "volume": int(row["Volume"]),
-            }
+        # ----------------------------
+        # 2H FLOW
+        # ----------------------------
+        if timeframe == "2h":
 
-            records.append(record)
+            candles = build_2h_candles(df)
+
+            for c in candles:
+                ts = c["timestamp"]
+
+                key = (symbol, c["timeframe"], ts)
+
+                records_map[key] = {
+                    "symbol": symbol,
+                    "timeframe": c["timeframe"],
+                    "timestamp": ts,
+                    "open": float(c["open"]),
+                    "high": float(c["high"]),
+                    "low": float(c["low"]),
+                    "close": float(c["close"]),
+                    "volume": int(c["volume"]),
+                }
+
+        # ----------------------------
+        # DAILY FLOW
+        # ----------------------------
+        else:
+
+            for timestamp, row in df.iterrows():
+                ts = timestamp.to_pydatetime().astimezone(timezone.utc)
+
+                key = (symbol, timeframe, ts)
+
+                records_map[key] = {
+                    "symbol": symbol,
+                    "timeframe": timeframe,
+                    "timestamp": ts,
+                    "open": float(row["Open"]),
+                    "high": float(row["High"]),
+                    "low": float(row["Low"]),
+                    "close": float(row["Close"]),
+                    "volume": int(row["Volume"]),
+                }
+
+        records = list(records_map.values())
 
         if not records:
             return
 
+        # -----------------------------------
+        # STEP 3: INSERT / UPSERT
+        # -----------------------------------
+
         stmt = insert(MarketCandle).values(records)
 
-        # Upsert — update only today's candles
         stmt = stmt.on_conflict_do_update(
             index_elements=["symbol", "timeframe", "timestamp"],
             set_={
@@ -101,7 +265,6 @@ def save_candles(symbol, timeframe, interval, period):
 
     finally:
         db.close()
-
 
 # ----------------------------
 # INCREMENTAL INGESTION
@@ -258,23 +421,23 @@ def run_market_close_ingestion():
                     ZoneInfo("Asia/Kolkata")
             )
 
-        warning_msg = f"""
-        Nifty Dashboard Warning
+            warning_msg = f"""
+                Nifty Dashboard Warning
 
-        Job: Market Close Ingestion
-        Status: COMPLETED but NO DATA
+                Job: Market Close Ingestion
+                Status: COMPLETED but NO DATA
 
-        Rows Updated: 0
+                Rows Updated: 0
 
-        Time: {ist_now.strftime("%d %b %Y %I:%M %p IST")}
+                Time: {ist_now.strftime("%d %b %Y %I:%M %p IST")}
 
-        Possible causes:
-        • Yahoo API returned empty data
-        • Network issue
-        • Market holiday mismatch
-        """
+                Possible causes:
+                • Yahoo API returned empty data
+                • Network issue
+                • Market holiday mismatch
+                """
 
-        send_telegram_alert(warning_msg)
+            send_telegram_alert(warning_msg)
 
         log_ingestion(
             job_type="market_close",
@@ -374,3 +537,20 @@ def repair_last_days(days):
     """
 
     send_telegram_alert(message)
+
+# -----------------------------
+# Temp 2H repair for last 60 days
+# -----------------------------
+def repair_intraday_days(days):
+
+    print(f"Repairing last {days} days of 2H candles")
+
+    for symbol in INTRADAY_SYMBOLS:
+        save_candles(
+            symbol,
+            "2h",
+            TIMEFRAMES["2h"]["interval"],
+            f"{days}d"   # dynamic period
+        )
+
+    print("2H repair complete ✅")

@@ -19,13 +19,15 @@ from admin.strategy_lab_service import run_strategy_scan
 from ingest_candles import run_incremental_ingestion
 from database import engine, Base
 from auth_service import *
-from scheduler import start_scheduler
 from ingest_candles import repair_last_days
-from fastapi import BackgroundTasks
 from telegram_alert import send_telegram_alert
 from zoneinfo import ZoneInfo
 from ingestion_logs import get_last_successful_ingestion
 from datetime import datetime
+from ingest_candles import repair_intraday_days
+from fastapi import APIRouter
+from fastapi import Header, HTTPException
+from ingest_candles import run_intraday_ingestion, run_market_close_ingestion
 
 # --------------------------
 # APP INIT
@@ -34,7 +36,6 @@ from datetime import datetime
 app = FastAPI()
 ##init_db()
 
-start_scheduler()
 
 Base.metadata.create_all(bind=engine)
 templates = Jinja2Templates(directory="templates")
@@ -99,6 +100,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
             "/auth",
             "/logout",
             "/login/google",
+            "/internal/run-ingestion",
         ]
 
         if request.url.path.startswith("/static"):
@@ -354,7 +356,7 @@ def strategy_lab_scan(
     include_live: str | None = Form(None),
     user=Depends(require_admin)
 ):
-    
+
     use_live_candle = include_live == "true"
     data = calculate_breadth()
 
@@ -395,7 +397,6 @@ def run_ingestion(user=Depends(require_admin)):
 
 @app.post("/admin/repair-ingestion")
 def repair_ingestion(
-    background_tasks: BackgroundTasks,
     days: int = Form(...),
     request: Request = None,
     user=Depends(require_admin)
@@ -415,12 +416,7 @@ def repair_ingestion(
         Time: {ist_now.strftime("%d %b %Y %I:%M %p IST")}
         """
 
-    # Send telegram in background
-    background_tasks.add_task(send_telegram_alert, start_msg)
-
-    # Run repair job in background
-    background_tasks.add_task(repair_last_days, days)
-
+    
     return RedirectResponse("/admin", status_code=302)
 
 # --------------------------
@@ -451,6 +447,18 @@ def run_group_update(request: Request):
 
     return RedirectResponse("/admin", status_code=302)
 
+# -----------------------------
+# Temp 2H repair for last 60 days
+# -----------------------------
+
+@app.post("/admin/repair-intraday")
+def repair_intraday(
+    days: int = 7,
+    user=Depends(require_admin)
+):
+    repair_intraday_days(days)
+    return RedirectResponse("/admin", status_code=302)
+
 # --------------------------
 # LOCAL RUN
 # --------------------------
@@ -462,3 +470,39 @@ if __name__ == "__main__":
         host="0.0.0.0",
         port=int(os.getenv("PORT", 8000))
     )
+
+
+# ----------------------------
+# Ingestion Cron Job in Github
+# ----------------------------
+
+INGESTION_SECRET = os.getenv("INGESTION_SECRET")
+
+@app.post("/internal/run-ingestion")
+def run_ingestion_job(
+    x_token: str = Header(...),
+    job_type: str = Query("intraday")   # 👈 NEW
+):
+
+    if x_token != INGESTION_SECRET:
+        raise HTTPException(status_code=403, detail="Unauthorized")
+
+    try:
+        send_telegram_alert(f"🚀 Ingestion triggered: {job_type}")
+
+        if job_type == "intraday":
+            run_intraday_ingestion()
+
+        elif job_type == "market_close":
+            run_market_close_ingestion()
+
+        else:
+            raise ValueError("Invalid job_type")
+
+        send_telegram_alert(f"✅ Ingestion completed: {job_type}")
+
+        return {"status": "success", "job": job_type}
+
+    except Exception as e:
+        send_telegram_alert(f"❌ Ingestion FAILED ({job_type}): {str(e)}")
+        raise

@@ -1,0 +1,33 @@
+name: Run Ingestion
+
+on:
+  schedule:
+    - cron: "50 5 * * 1-5"   # 11:20 IST
+    - cron: "50 7 * * 1-5"   # 1:20 IST
+    - cron: "50 9 * * 1-5"   # 3:20 IST
+    - cron: "30 10 * * 1-5"  # 4:00 IST close
+  workflow_dispatch:
+
+jobs:
+  run-ingestion:
+    runs-on: ubuntu-latest
+
+    steps:
+
+      # -----------------------------
+      # Intraday Jobs
+      # -----------------------------
+      - name: Intraday ingestion
+        if: github.event.schedule != '30 10 * * 1-5'
+        run: |
+          curl -f -X POST "https://nifty-dashboard-production.up.railway.app/internal/run-ingestion?job_type=intraday" \
+          -H "x-token: ${{ secrets.INGESTION_SECRET }}"
+
+      # -----------------------------
+      # Market Close Job
+      # -----------------------------
+      - name: Market close ingestion
+        if: github.event.schedule == '30 10 * * 1-5'
+        run: |
+          curl -f -X POST "https://nifty-dashboard-production.up.railway.app/internal/run-ingestion?job_type=market_close" \
+          -H "x-token: ${{ secrets.INGESTION_SECRET }}"
