@@ -13,6 +13,7 @@ import pandas as pd
 from zoneinfo import ZoneInfo
 from telegram_alert import send_telegram_alert
 from datetime import time, datetime
+from fno_universe import load_fno_universe
 
 
 # ----------------------------
@@ -23,7 +24,9 @@ STOCK_SYMBOLS = load_stock_universe()
 INDEX_SYMBOLS = ["^NSEI", "^NSEBANK"]
 
 DAILY_SYMBOLS = STOCK_SYMBOLS + INDEX_SYMBOLS
-INTRADAY_SYMBOLS = INDEX_SYMBOLS  # only indices get 2h
+##INTRADAY_SYMBOLS = INDEX_SYMBOLS  # only indices get 2h
+
+INTRADAY_SYMBOLS = load_fno_universe()
 
 TIMEFRAMES = {
     "1d": {"interval": "1d", "period": "7d"},
