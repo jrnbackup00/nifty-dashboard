@@ -5,12 +5,7 @@ from sqlalchemy.sql import func
 from database import Base
 from sqlalchemy import UniqueConstraint
 from datetime import datetime, timezone
-from sqlalchemy import Column, Integer, String
-
-from sqlalchemy import Column, String
 from database import Base
-
-
 
 class User(Base):
     __tablename__ = "users"
@@ -99,3 +94,27 @@ class IngestionLog(Base):
     rows_ingested = Column(Integer)
 
     errors = Column(Text)
+
+class Symbol(Base):
+    __tablename__ = "symbols"
+
+    id = Column(Integer, primary_key=True)
+    symbol = Column(String, unique=True, index=True)
+
+    is_fno = Column(Boolean, default=False)
+    is_index = Column(Boolean, default=False)
+
+
+
+
+class Signal(Base):
+    __tablename__ = "signals"
+
+    id = Column(Integer, primary_key=True)
+
+    symbol = Column(String, index=True)
+    timeframe = Column(String)   # '2h'
+    signal_type = Column(String)  # 'inverse_hammer'
+
+    timestamp = Column(DateTime)  # candle close time
+    created_at = Column(DateTime, default=datetime.utcnow)

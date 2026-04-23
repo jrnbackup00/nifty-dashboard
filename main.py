@@ -17,17 +17,22 @@ from init_db import init_db
 from user_service import get_user_by_email
 from admin.strategy_lab_service import run_strategy_scan
 from ingest_candles import run_incremental_ingestion
-from database import engine, Base
+from database import engine, Base, SessionLocal
 from auth_service import *
 from ingest_candles import repair_last_days
 from telegram_alert import send_telegram_alert
 from zoneinfo import ZoneInfo
 from ingestion_logs import get_last_successful_ingestion
-from datetime import datetime
+from datetime import datetime, timezone
 from ingest_candles import repair_intraday_days
 from fastapi import APIRouter
 from fastapi import Header, HTTPException
 from ingest_candles import run_intraday_ingestion, run_market_close_ingestion
+from models import Signal, Symbol
+
+
+
+
 
 # --------------------------
 # APP INIT
@@ -92,7 +97,7 @@ PERMISSIONS = {
 # AUTH MIDDLEWARE
 # --------------------------
 
-class AuthMiddleware(BaseHTTPMiddleware):
+""" class AuthMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
 
         public_routes = [
@@ -117,6 +122,47 @@ class AuthMiddleware(BaseHTTPMiddleware):
         role = user.get("role")
 
         # Admin can access everything
+        if role == "admin":
+            return await call_next(request)
+
+        allowed_routes = PERMISSIONS.get(role, [])
+
+        if request.url.path not in allowed_routes:
+            return HTMLResponse("Permission Denied", status_code=403)
+        
+        return await call_next(request)
+"""
+
+class AuthMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+
+        # ✅ BYPASS WEBHOOK & INTERNAL APIs
+        if request.url.path.startswith("/webhook"):
+            return await call_next(request)
+
+        if request.url.path.startswith("/internal"):
+            return await call_next(request)
+
+        public_routes = [
+            "/login",
+            "/auth",
+            "/logout",
+            "/login/google",
+        ]
+
+        if request.url.path.startswith("/static"):
+            return await call_next(request)
+
+        if request.url.path in public_routes:
+            return await call_next(request)
+
+        user = request.session.get("user")
+
+        if not user:
+            return RedirectResponse("/login")
+
+        role = user.get("role")
+
         if role == "admin":
             return await call_next(request)
 
@@ -195,6 +241,7 @@ async def auth(request: Request):
     }
 
     return RedirectResponse("/dashboard", status_code=302)
+
 
 
 @app.get("/logout")
@@ -506,3 +553,109 @@ def run_ingestion_job(
     except Exception as e:
         send_telegram_alert(f"❌ Ingestion FAILED ({job_type}): {str(e)}")
         raise
+
+
+
+
+
+@app.post("/webhook/tradingview")
+@app.post("/webhook/tradingview/")
+async def tradingview_webhook(request: Request):
+
+    db = SessionLocal()
+
+    try:
+        payload = await request.json()
+
+        # -------------------
+        # Extract fields
+        # -------------------
+        raw_symbol = payload.get("symbol")
+        timeframe = payload.get("timeframe")
+        signal_type = payload.get("signal")
+        c_time = payload.get("candle_time")
+
+        SECRET = os.getenv("WEBHOOK_SECRET")
+
+        # -------------------
+        # Secret validation
+        # -------------------
+        if payload.get("secret") != SECRET:
+            return {"status": "unauthorized"}
+
+        if not raw_symbol:
+            return {"status": "error", "message": "symbol missing"}
+
+        # -------------------
+        # Normalize symbol
+        # -------------------
+        symbol = raw_symbol
+
+        if ":" in symbol:
+            symbol = symbol.split(":")[1]
+
+        if not symbol.endswith(".NS") and not symbol.startswith("^"):
+            symbol = f"{symbol}.NS"
+
+        # -------------------
+        # Validate existence
+        # -------------------
+        exists = db.query(Symbol).filter_by(symbol=symbol).first()
+
+        if not exists:
+            print(f"⚠️ Symbol not tracked: {symbol}")
+            return {"status": "ignored", "symbol": symbol}
+
+        # -------------------
+        # Normalize timestamp (CRITICAL FIX)
+        # -------------------
+        if c_time:
+            ts = datetime.fromisoformat(c_time.replace("Z", "+00:00"))
+        else:
+            ts = datetime.now(timezone.utc)
+
+        # 👉 Convert to NAIVE UTC (DB SAFE)
+        ts = ts.astimezone(timezone.utc).replace(tzinfo=None)
+
+        # -------------------
+        # Duplicate check
+        # -------------------
+        existing = db.query(Signal).filter_by(
+            symbol=symbol,
+            timeframe=timeframe,
+            signal_type=signal_type,
+            timestamp=ts
+        ).first()
+
+        if existing:
+            print("⚠️ Duplicate signal ignored")
+            return {"status": "duplicate"}
+
+        # -------------------
+        # Insert signal
+        # -------------------
+        signal = Signal(
+            symbol=symbol,
+            timeframe=timeframe,
+            signal_type=signal_type,
+            timestamp=ts
+        )
+
+        db.add(signal)
+        db.commit()
+
+        print("✅ Signal stored")
+
+        return {
+            "status": "stored",
+            "symbol": symbol,
+            "timeframe": timeframe,
+            "signal": signal_type
+        }
+
+    except Exception as e:
+        print("❌ ERROR:", str(e))
+        return {"status": "error", "message": str(e)}
+
+    finally:
+        db.close()
