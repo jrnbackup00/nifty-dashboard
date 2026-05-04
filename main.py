@@ -589,7 +589,7 @@ async def tradingview_webhook(request: Request):
         if not raw_symbol:
             print("symbol missing")
             return {"status": "error", "message": "symbol missing"}
-
+        """
         # -------------------
         # Normalize symbol
         # -------------------
@@ -616,7 +616,57 @@ async def tradingview_webhook(request: Request):
         if not exists:
             print(f"⚠️ Symbol not tracked: {symbol}")
             return {"status": "ignored", "symbol": symbol}
-        
+        """
+
+        # -------------------
+        # Normalize symbol (ADVANCED)
+        # -------------------
+        symbol = raw_symbol.strip()
+
+        is_spread = "-" in symbol
+
+        # -------------------
+        # Handle spread symbols (e.g., US10Y-TVC:US02Y)
+        # -------------------
+        if is_spread:
+            parts = symbol.split("-")
+            clean_parts = []
+
+            for part in parts:
+                if ":" in part:
+                    part = part.split(":")[1]
+
+                part = part.upper()
+                clean_parts.append(part)
+
+            symbol = "-".join(clean_parts)
+
+        else:
+            # -------------------
+            # Single symbol
+            # -------------------
+            if ":" in symbol:
+                symbol = symbol.split(":")[1]
+
+            symbol = symbol.upper()
+
+        # -------------------
+        # Decide suffix (.NS or not)
+        # -------------------
+        NON_NS_SYMBOLS = {"DXY", "US10Y", "US02Y"}
+
+        if is_spread:
+            parts = symbol.split("-")
+            symbol = "-".join([
+                p if p in NON_NS_SYMBOLS else f"{p}.NS"
+                for p in parts
+            ])
+        else:
+            if symbol not in NON_NS_SYMBOLS and not symbol.startswith("^"):
+                symbol = f"{symbol}.NS"
+
+        print("🔁 Normalized symbol:", symbol)
+
         # -------------------
         # Normalize timestamp (CRITICAL FIX)
         # -------------------
