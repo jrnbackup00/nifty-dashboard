@@ -29,7 +29,7 @@ from fastapi import APIRouter
 from fastapi import Header, HTTPException
 from ingest_candles import run_intraday_ingestion, run_market_close_ingestion
 from models import Signal, Symbol
-
+from sqlalchemy import func
 
 
 
@@ -562,11 +562,13 @@ def run_ingestion_job(
 @app.post("/webhook/tradingview/")
 async def tradingview_webhook(request: Request):
 
+    print("🔥 WEBHOOK HIT")
+
     db = SessionLocal()
 
     try:
         payload = await request.json()
-
+        print("📦 Payload:", payload)
         # -------------------
         # Extract fields
         # -------------------
@@ -581,21 +583,30 @@ async def tradingview_webhook(request: Request):
         # Secret validation
         # -------------------
         if payload.get("secret") != SECRET:
+            print("secret key mismatch")
             return {"status": "unauthorized"}
 
         if not raw_symbol:
+            print("symbol missing")
             return {"status": "error", "message": "symbol missing"}
 
         # -------------------
         # Normalize symbol
         # -------------------
-        symbol = raw_symbol
+        symbol = raw_symbol.strip()
 
+        # Remove exchange prefix
         if ":" in symbol:
             symbol = symbol.split(":")[1]
 
+        # Normalize case
+        symbol = symbol.upper()
+
+        # Append suffix
         if not symbol.endswith(".NS") and not symbol.startswith("^"):
             symbol = f"{symbol}.NS"
+
+        print("🔁 Normalized symbol:", symbol)
 
         # -------------------
         # Validate existence
@@ -605,7 +616,7 @@ async def tradingview_webhook(request: Request):
         if not exists:
             print(f"⚠️ Symbol not tracked: {symbol}")
             return {"status": "ignored", "symbol": symbol}
-
+        
         # -------------------
         # Normalize timestamp (CRITICAL FIX)
         # -------------------
