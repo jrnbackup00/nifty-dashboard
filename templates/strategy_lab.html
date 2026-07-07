@@ -56,8 +56,62 @@ ECP1A
 ECP1D
 </option>
 
+<option value="big_move"
+    {% if selected_strategy == "big_move" %}selected{% endif %}>
+    Big Move
+</option>
+
 </select>
 </div>
+
+<div class="mb-2">
+
+    <label class="form-label">Universe</label>
+
+    <select name="universe" class="form-select">
+
+        <option value="all"
+            {% if selected_universe == "all" %}selected{% endif %}>
+            All Universe
+        </option>
+
+        <option value="fno"
+            {% if selected_universe == "fno" %}selected{% endif %}>
+            F&O Only
+        </option>
+
+    </select>
+</div>
+
+<!-- EMA Confirmation Filter -->
+    <div id="ema-filter-box"
+     style="min-width:220px; display:none;">
+
+    <label class="form-label small mb-1">
+    EMA Confirmation
+    </label>
+
+    <select name="ema_filter" class="form-select">
+
+    <option value=""
+    {% if not selected_ema_filter %}selected{% endif %}>
+    No EMA Filter
+    </option>
+
+    <option value="cross_above"
+    {% if selected_ema_filter == "cross_above" %}selected{% endif %}>
+    ECP1A
+    </option>
+
+    <option value="cross_below"
+    {% if selected_ema_filter == "cross_below" %}selected{% endif %}>
+    ECP1D
+    </option>
+
+    </select>
+
+    </div>
+
 
 <!-- Timeframe -->
 <div style="min-width:160px">
@@ -93,37 +147,83 @@ Monthly
 </div>
 
 
-<!-- Lookback -->
-<div style="min-width:140px">
-<label class="form-label small mb-1">Lookback</label>
-<select name="lookback" class="form-select">
+<!-- Dynamic Filter -->
+<div style="min-width:180px" id="lookback-box">
 
-<option value="1" {% if selected_lookback == 1 %}selected{% endif %}>
+<label class="form-label small mb-1"
+id="dynamic-filter-label">
+
+Lookback
+
+</label>
+
+<select name="lookback"
+class="form-select"
+id="dynamic-filter">
+
+<!-- EMA Scanner Options -->
+
+<option value="1"
+{% if selected_lookback == 1 %}selected{% endif %}>
 1 Candle
 </option>
 
-<option value="2" {% if selected_lookback == 2 %}selected{% endif %}>
+<option value="2"
+{% if selected_lookback == 2 %}selected{% endif %}>
 2 Candles
 </option>
 
-<option value="3" {% if selected_lookback == 3 %}selected{% endif %}>
+<option value="3"
+{% if selected_lookback == 3 %}selected{% endif %}>
 3 Candles
 </option>
 
-<option value="4" {% if selected_lookback == 4 %}selected{% endif %}>
+<option value="4"
+{% if selected_lookback == 4 %}selected{% endif %}>
 4 Candles
 </option>
 
-<option value="5" {% if selected_lookback == 5 %}selected{% endif %}>
+<option value="5"
+{% if selected_lookback == 5 %}selected{% endif %}>
 5 Candles
 </option>
 
 </select>
+
 </div>
 
+<!-- Signal Window -->
+<div style="min-width:180px; display:none;"
+id="signal-window-box">
+
+<label class="form-label small mb-1">
+Signal Window
+</label>
+
+<select name="signal_window"
+class="form-select">
+
+<option value="today"
+{% if selected_signal_window == "today" %}selected{% endif %}>
+Today
+</option>
+
+<option value="yesterday"
+{% if selected_signal_window == "yesterday" %}selected{% endif %}>
+Yesterday
+</option>
+
+<option value="week"
+{% if selected_signal_window == "week" %}selected{% endif %}>
+This Week
+</option>
+
+</select>
+
+</div>
 
 <!-- Include Current Candle -->
-<div class="form-check mt-4">
+<div class="form-check mt-4" id="live-candle-box">
 
 <input class="form-check-input"
 type="checkbox"
@@ -234,7 +334,7 @@ Run Scan
 
 </div>
 
-<script>
+<!-- <script>
 
 function validateScannerForm() {
 
@@ -254,5 +354,155 @@ function validateScannerForm() {
     return true;
 }
 
+</script> 
+
+<script>
+
+function validateScannerForm() {
+
+    const strategy = document.querySelector(
+        "select[name='strategy_type']"
+    ).value;
+
+    const timeframe = document.querySelector(
+        "select[name='timeframe']"
+    ).value;
+
+    if (!strategy) {
+        alert("Please select a Strategy.");
+        return false;
+    }
+
+    if (!timeframe) {
+        alert("Please select a Timeframe.");
+        return false;
+    }
+
+    return true;
+}
+
+function toggleEMAFilter() {
+
+    const strategy = document.querySelector(
+        "select[name='strategy_type']"
+    ).value;
+
+    const emaBox = document.getElementById(
+        "ema-filter-box"
+    );
+
+    if (strategy === "big_move") {
+        emaBox.style.display = "block";
+    } else {
+        emaBox.style.display = "none";
+    }
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    toggleEMAFilter();
+
+    document.querySelector(
+        "select[name='strategy_type']"
+    ).addEventListener("change", toggleEMAFilter);
+
+});
+
+</script> -->
+
+<script>
+
+function validateScannerForm() {
+
+    const strategy = document.querySelector(
+        "select[name='strategy_type']"
+    ).value;
+
+    const timeframe = document.querySelector(
+        "select[name='timeframe']"
+    ).value;
+
+    if (!strategy) {
+        alert("Please select a Strategy.");
+        return false;
+    }
+
+    if (!timeframe) {
+        alert("Please select a Timeframe.");
+        return false;
+    }
+
+    return true;
+}
+
+function toggleStrategyFilters() {
+
+    const strategy = document.querySelector(
+        "select[name='strategy_type']"
+    ).value;
+
+    const emaBox = document.getElementById(
+        "ema-filter-box"
+    );
+
+    const lookbackBox = document.getElementById(
+        "lookback-box"
+    );
+
+    const liveCandleBox = document.getElementById(
+        "live-candle-box"
+    );
+
+    const signalWindowBox = document.getElementById(
+        "signal-window-box"
+    );
+
+    // -----------------------------------
+    // Big Move
+    // -----------------------------------
+
+    if (strategy === "big_move") {
+
+        emaBox.style.display = "block";
+
+        lookbackBox.style.display = "none";
+
+        liveCandleBox.style.display = "none";
+
+        signalWindowBox.style.display = "block";
+    }
+
+    // -----------------------------------
+    // Scanners
+    // -----------------------------------
+
+    else {
+
+        emaBox.style.display = "none";
+
+        lookbackBox.style.display = "block";
+
+        liveCandleBox.style.display = "block";
+
+        signalWindowBox.style.display = "none";
+    }
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    toggleStrategyFilters();
+
+    document.querySelector(
+        "select[name='strategy_type']"
+    ).addEventListener("change", function () {
+
+        toggleStrategyFilters();
+
+    });
+
+});
+
 </script>
+
+
 {% endblock %}

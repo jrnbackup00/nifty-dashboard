@@ -3,6 +3,7 @@ load_dotenv()
 
 import os
 import secrets
+import traceback
 
 from fastapi import FastAPI, Request, Query, Form, Depends
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -401,18 +402,27 @@ def strategy_lab_scan(
     timeframe: str | None = Form(None),
     lookback: int = Form(...),
     include_live: str | None = Form(None),
+    universe: str = Form("all"),
+    signal_window: str = Form("today"),
+    ema_filter: str | None = Form(None),
     user=Depends(require_admin)
 ):
-
     use_live_candle = include_live == "true"
     data = calculate_breadth()
-
+   
     results = run_strategy_scan(
         strategy_type=strategy_type,
         timeframe=timeframe,
         lookback=int(lookback),
-        use_live_candle=use_live_candle
+        use_live_candle=use_live_candle,
+        universe=universe,
+        signal_window=signal_window,
+        ema_filter=ema_filter
     )
+
+    print("RETURNED TO UI:", len(results))
+
+    print("SENDING TO TEMPLATE:", len(results))
 
     return templates.TemplateResponse(
         "strategy_lab.html",
@@ -420,10 +430,19 @@ def strategy_lab_scan(
             "request": request,
             "data": data,
             "results": results,
+
             "selected_strategy": strategy_type,
             "selected_timeframe": timeframe,
             "selected_lookback": lookback,
-            "include_live": use_live_candle
+
+            "include_live": use_live_candle,
+
+            
+
+            # NEW
+            "selected_universe": universe,
+            "selected_ema_filter": ema_filter,
+            "selected_signal_window": signal_window
         }
     )
 
@@ -549,9 +568,17 @@ def run_ingestion_job(
         send_telegram_alert(f"✅ Ingestion completed: {job_type}")
 
         return {"status": "success", "job": job_type}
+    
 
     except Exception as e:
-        send_telegram_alert(f"❌ Ingestion FAILED ({job_type}): {str(e)}")
+        error_text = traceback.format_exc()
+
+        print(error_text)
+
+        send_telegram_alert(
+            f"❌ Ingestion FAILED ({job_type})\n\n{str(e)}"
+        )
+
         raise
 
 

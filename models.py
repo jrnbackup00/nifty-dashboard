@@ -4,7 +4,7 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 from database import Base
 from sqlalchemy import UniqueConstraint
-from datetime import datetime, timezone
+from datetime import datetime, timezone, UTC
 from database import Base
 
 class User(Base):
@@ -117,4 +117,4 @@ class Signal(Base):
     signal_type = Column(String)  # 'inverse_hammer'
 
     timestamp = Column(DateTime)  # candle close time
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
