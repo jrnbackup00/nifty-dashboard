@@ -561,7 +561,17 @@ def run_strategy_scan(
             symbol, g = item
         
         if strategy_type == "big_move" and g is None:
+            
+            signal_time = pd.Timestamp(signal.timestamp)
 
+            if signal_time.tzinfo is None:
+                signal_time = signal_time.tz_localize("UTC")
+
+            signal_time_ist = (
+                signal_time
+                .tz_convert("Asia/Kolkata")
+                .strftime("%d-%b-%Y %I:%M %p")
+            )
             results.append({
                 "symbol": symbol,
                 "price": None,
@@ -573,7 +583,7 @@ def run_strategy_scan(
                 "trend": "No Candle Data",
                 "st_direction": None,
                 "st_value": None,
-                "bars_since_signal": None
+                "bars_since_signal": signal_time_ist
             })
 
             continue
@@ -742,6 +752,21 @@ def run_strategy_scan(
                 if signal_ts.tzinfo is not None:
                     signal_ts = signal_ts.tz_localize(None)
 
+            # -----------------------------
+            # Display timestamp in IST
+            # -----------------------------
+
+            signal_time = pd.Timestamp(signal.timestamp)
+
+            if signal_time.tzinfo is None:
+                signal_time = signal_time.tz_localize("UTC")
+
+            signal_time_ist = (
+                signal_time
+                .tz_convert("Asia/Kolkata")
+                .strftime("%d-%b-%Y %I:%M %p")
+            )
+
             signal_idx = g.index.get_indexer(
                 [signal_ts],
                 method="nearest"
@@ -766,6 +791,8 @@ def run_strategy_scan(
                 trend = "Neutral"
 
             
+            
+
             # -----------------------------
             # EMA FILTER
             # -----------------------------
@@ -844,7 +871,7 @@ def run_strategy_scan(
                     if not np.isnan(latest["Supertrend"])
                     else None
                 ),
-                "bars_since_signal": bars_since_signal
+                "bars_since_signal": signal_time_ist
             })
 
             continue

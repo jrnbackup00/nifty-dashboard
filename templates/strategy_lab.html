@@ -310,7 +310,11 @@ Run Scan
 
                             <td>
                                 <span class="badge bg-dark">
-                                    {{ r.bars_since_cross }}
+                                    {% if selected_strategy == "big_move" %}
+                                        {{ r.bars_since_signal }}
+                                    {% else %}
+                                        {{ r.bars_since_cross }}
+                                    {% endif %}
                                 </span>
                             </td>
 

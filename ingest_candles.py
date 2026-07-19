@@ -27,6 +27,7 @@ DAILY_SYMBOLS = STOCK_SYMBOLS + INDEX_SYMBOLS
 ##INTRADAY_SYMBOLS = INDEX_SYMBOLS  # only indices get 2h
 
 INTRADAY_SYMBOLS = load_fno_universe()
+print("F&O Symbols:", len(INTRADAY_SYMBOLS))
 
 TIMEFRAMES = {
     "1d": {"interval": "1d", "period": "7d"},
@@ -163,7 +164,7 @@ def save_candles(symbol, timeframe, interval, period):
     interval=interval,
     period=period,
     auto_adjust=True,   
-    threads=True        
+    ##threads=True        
     )
 
     if df.empty:
@@ -410,7 +411,7 @@ def run_market_close_ingestion():
         rows_2h = ingest_2h_candles()
         rows_1d = ingest_daily_candles()
 
-        repair_last_days(1)
+        ##repair_last_days(1)
 
         total_rows = rows_2h + rows_1d
 
