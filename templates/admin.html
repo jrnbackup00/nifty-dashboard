@@ -10,9 +10,14 @@
 <!-- SYSTEM MAINTENANCE -->
 <!-- ================================= -->
 
-<div class="card shadow-soft p-4 mb-4">
+<div class="card shadow-sm mt-4">
+    <div class="card-header bg-warning text-white">
 
-<h5 class="mb-3">System Maintenance</h5>
+        <strong>System Maintenance</strong>
+
+    </div>
+
+
 
 <!-- <div class="row g-3">
 
@@ -137,14 +142,74 @@ Rebuild candles for last N days
 </div>
 
 </div>
+<!-- ========================= -->
+<!-- Signal Cleanup -->
+<!-- ========================= -->
 
+<div class="card shadow-sm mt-4">
+    <div class="card-header bg-danger text-white">
+        <strong>Signal Cleanup</strong>
+    </div>
+
+    <div class="card-body">
+
+        <form
+            method="POST"
+            action="/admin/delete-old-signals"
+            onsubmit="return confirmSignalCleanup();">
+
+            <div class="row align-items-end">
+
+                <div class="col-md-3">
+
+                    <label class="form-label">
+                        Delete signals older than
+                    </label>
+
+                    <input
+                        id="signal_cleanup_days"
+                        type="number"
+                        name="days"
+                        value="7"
+                        min="1"
+                        class="form-control"
+                        required>
+
+                </div>
+
+            <div class="col-md-3">
+
+                <button
+                    type="submit"
+                    class="btn btn-danger">
+
+                    Delete Old Signals
+
+                </button>
+
+            </div>
+
+            </div>
+
+        </form>
+
+        <small class="text-muted mt-3 d-block">
+            Only <strong>Inverse Hammer</strong> signals older than the specified number of days will be permanently deleted.
+        </small>
+
+    </div>
+</div>
 <!-- ================================= -->
 <!-- USER MANAGEMENT -->
 <!-- ================================= -->
 
-<div class="card shadow-soft p-4">
+<div class="card mt-4 shadow-sm">
 
-<h5 class="mb-3">User Management</h5>
+    <div class="card-header bg-primary text-white">
+
+      <strong>User Management</strong>
+
+    </div>
 
 <!-- Add User -->
 
@@ -311,6 +376,26 @@ function confirmIntradayRepair(form) {
     return confirm("Repair 2H candles?\n\nThis will rebuild recent 7 days intraday data.\nThis action may take a few minutes.");
 }
 </script>
+
+<script>
+
+function confirmSignalCleanup() {
+
+    const days = document.getElementById("signal_cleanup_days").value;
+
+    return confirm(
+        "⚠️ SIGNAL CLEANUP\n\n" +
+        "This will permanently delete all Inverse Hammer signals older than " +
+        days +
+        " day(s).\n\n" +
+        "This action cannot be undone.\n\n" +
+        "Do you want to continue?"
+    );
+
+}
+
+</script>
+
 </tbody>
 
 </table>
@@ -320,3 +405,4 @@ function confirmIntradayRepair(form) {
 </div>
 
 {% endblock %}
+

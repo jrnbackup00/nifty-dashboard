@@ -24,15 +24,15 @@ from ingest_candles import repair_last_days
 from telegram_alert import send_telegram_alert
 from zoneinfo import ZoneInfo
 from ingestion_logs import get_last_successful_ingestion
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from ingest_candles import repair_intraday_days
 from fastapi import APIRouter
 from fastapi import Header, HTTPException
 from ingest_candles import run_intraday_ingestion, run_market_close_ingestion
 from models import Signal, Symbol
 from sqlalchemy import func
-
-
+from fastapi import Form
+from fastapi.responses import RedirectResponse
 
 
 # --------------------------
@@ -747,3 +747,43 @@ async def tradingview_webhook(request: Request):
 
     finally:
         db.close()
+
+
+
+# --------------------------
+# ADMIN - DELETE OLD SIGNALS
+# --------------------------
+
+@app.post("/admin/delete-old-signals")
+def delete_old_signals(
+    days: int = Form(7),
+    user=Depends(require_admin)
+):
+
+    db = SessionLocal()
+
+    try:
+
+        cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+
+        deleted = (
+            db.query(Signal)
+            .filter(
+                Signal.signal_type == "inverse_hammer",
+                Signal.timestamp < cutoff
+            )
+            .delete(synchronize_session=False)
+        )
+
+        db.commit()
+
+        send_telegram_alert(
+            f"🗑 Signal Cleanup\n\n"
+            f"Deleted: {deleted}\n"
+            f"Older than: {days} days"
+        )
+
+    finally:
+        db.close()
+
+    return RedirectResponse("/admin", status_code=302)
